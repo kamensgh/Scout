@@ -4,6 +4,7 @@ export interface Store {
   logo: string;
   abbreviation: string;
   type: 'physical' | 'online' | 'both';
+  country: string; // ISO 3166-1 alpha-2
   lat?: number;
   lng?: number;
   address?: string;

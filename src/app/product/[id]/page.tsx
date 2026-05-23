@@ -17,7 +17,8 @@ import { StarRating } from '@/components/ui/StarRating';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { formatPrice, discountPercent, cn } from '@/lib/utils';
+import { discountPercent, cn } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 import { queryKeys } from '@/lib/query-keys';
 
 interface ProductPageProps {
@@ -29,6 +30,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const { lat, lng } = useLocationStore();
   const { isProductSaved, addProduct, removeProduct } = useWishlistStore();
   const { isCompared, addProduct: addToCompare, removeProduct: removeFromCompare } = useComparisonStore();
+  const { formatPrice } = useCurrency();
   const [specsOpen, setSpecsOpen] = useState(false);
 
   const { data: product, isLoading, error } = useQuery<Product>({

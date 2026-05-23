@@ -5,14 +5,38 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(pence: number): string {
-  return `£${(pence / 100).toFixed(2)}`;
+// amount is stored in 1/100 of the main currency unit (e.g. pence, cents, etc.)
+export function formatPrice(amount: number, currency = 'GBP'): string {
+  try {
+    return new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount / 100);
+  } catch {
+    return `${(amount / 100).toFixed(2)}`;
+  }
 }
 
-export function formatPriceShort(pence: number): string {
-  const pounds = pence / 100;
-  if (pounds >= 1000) return `£${(pounds / 1000).toFixed(1)}k`;
-  return `£${pounds.toFixed(0)}`;
+export function formatPriceShort(amount: number, currency = 'GBP'): string {
+  const value = amount / 100;
+  try {
+    const formatter = new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    });
+    if (value >= 1_000_000) {
+      return formatter.format(value / 1_000_000).replace(/[\d,]+/, n => n + 'M');
+    }
+    if (value >= 1_000) {
+      return formatter.format(value / 1_000).replace(/[\d,]+/, n => n + 'k');
+    }
+    return formatter.format(value);
+  } catch {
+    return `${value.toFixed(0)}`;
+  }
 }
 
 export function discountPercent(rrpPence: number, salePence: number): number {

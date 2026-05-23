@@ -20,7 +20,7 @@ const NAV_LINKS = [
 export function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { displayName, clear } = useLocationStore();
+  const { displayName, openPicker } = useLocationStore();
   const { comparedIds } = useComparisonStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,7 +42,7 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto px-4 h-8 flex items-center justify-between text-xs text-scout-muted">
           <div className="flex items-center gap-4">
             {displayName && (
-              <button onClick={clear} className="flex items-center gap-1 hover:text-scout-dark transition-colors">
+              <button onClick={openPicker} className="flex items-center gap-1 hover:text-scout-dark transition-colors">
                 <MapPin size={11} />
                 <span>{displayName}</span>
               </button>

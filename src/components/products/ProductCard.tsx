@@ -10,7 +10,8 @@ import { useWishlistStore } from '@/store/wishlist-store';
 import { useComparisonStore } from '@/store/comparison-store';
 import { StarRating } from '@/components/ui/StarRating';
 import { Badge } from '@/components/ui/Badge';
-import { cn, formatPrice, discountPercent, formatDistance } from '@/lib/utils';
+import { cn, discountPercent, formatDistance } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +23,7 @@ export function ProductCard({ product, className, showDistance = true }: Product
   const [imageError, setImageError] = useState(false);
   const { isProductSaved, addProduct, removeProduct } = useWishlistStore();
   const { isCompared, addProduct: addToCompare, removeProduct: removeFromCompare } = useComparisonStore();
+  const { formatPrice } = useCurrency();
 
   const saved = isProductSaved(product.id);
   const compared = isCompared(product.id);

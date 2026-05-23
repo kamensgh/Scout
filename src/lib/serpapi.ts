@@ -70,7 +70,7 @@ function guessCategoryFromTitle(title: string): ProductCategory {
   return 'home';
 }
 
-export async function searchGoogleShopping(query: string, countryCode = 'gb'): Promise<Product[]> {
+async function fetchShopping(query: string, countryCode: string): Promise<Product[]> {
   const apiKey = process.env.SERP_API_KEY;
   if (!apiKey) return [];
 
@@ -158,4 +158,32 @@ export async function searchGoogleShopping(query: string, countryCode = 'gb'): P
 
   cachePut(products);
   return products;
+}
+
+// Countries with verified Google Shopping support
+const SUPPORTED_COUNTRIES = new Set([
+  'us', 'gb', 'ca', 'au', 'de', 'fr', 'it', 'es', 'nl', 'be', 'at', 'ch',
+  'se', 'no', 'dk', 'fi', 'pl', 'pt', 'ie', 'nz', 'sg', 'in', 'jp', 'br',
+  'mx', 'za', 'ng', 'ke', 'eg', 'ae', 'sa',
+]);
+
+const FALLBACK_CHAIN = ['us', 'gb'];
+
+export async function searchGoogleShopping(query: string, countryCode = 'gb'): Promise<Product[]> {
+  const code = countryCode.toLowerCase();
+
+  // Try the requested country first if it's supported
+  if (SUPPORTED_COUNTRIES.has(code)) {
+    const results = await fetchShopping(query, code);
+    if (results.length > 0) return results;
+  }
+
+  // Fall back through the chain until we get results
+  for (const fallback of FALLBACK_CHAIN) {
+    if (fallback === code) continue;
+    const results = await fetchShopping(query, fallback);
+    if (results.length > 0) return results;
+  }
+
+  return [];
 }

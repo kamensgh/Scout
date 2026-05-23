@@ -3,7 +3,7 @@
 import { SlidersHorizontal } from 'lucide-react';
 import { useSearchStore } from '@/store/search-store';
 import { RangeSlider } from '@/components/ui/RangeSlider';
-import { formatPrice } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 import type { ProductCategory } from '@/types';
 
 const CATEGORIES: { id: ProductCategory; label: string }[] = [
@@ -19,6 +19,7 @@ const CATEGORIES: { id: ProductCategory; label: string }[] = [
 
 export function FilterPanel() {
   const { filters, setFilters } = useSearchStore();
+  const { formatPrice } = useCurrency();
 
   const toggleCategory = (cat: ProductCategory) => {
     const cats = filters.categories.includes(cat)

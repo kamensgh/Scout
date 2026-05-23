@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import type { Product } from '@/types';
-import { formatPrice, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useLocationStore } from '@/store/location-store';
+import { useCurrency } from '@/hooks/useCurrency';
 import { queryKeys } from '@/lib/query-keys';
 
 interface PriceLeaderboardProps {
@@ -14,6 +15,7 @@ interface PriceLeaderboardProps {
 
 export function PriceLeaderboard({ query }: PriceLeaderboardProps) {
   const { lat, lng } = useLocationStore();
+  const { formatPrice } = useCurrency();
 
   const { data, isLoading } = useQuery<Product[]>({
     queryKey: queryKeys.search(query, lat, lng),

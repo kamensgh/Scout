@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { StarRating } from '@/components/ui/StarRating';
 import { Badge } from '@/components/ui/Badge';
-import { formatPrice, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 import type { Product } from '@/types';
 import Image from 'next/image';
 
@@ -18,6 +19,7 @@ export default function ComparePage() {
   const [mounted, setMounted] = useState(false);
   const { comparedIds, removeProduct, clear } = useComparisonStore();
   const { lat, lng } = useLocationStore();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => { setMounted(true); }, []);
 

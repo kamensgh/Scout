@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { ExternalLink, MapPin, Truck, ArrowUpDown } from 'lucide-react';
 import type { StorePrice } from '@/types';
 import { Badge } from '@/components/ui/Badge';
-import { cn, formatPrice, formatDistance } from '@/lib/utils';
+import { cn, formatDistance } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface EnrichedStorePrice extends StorePrice {
   distanceKm?: number;
@@ -22,6 +23,7 @@ type SortKey = 'price' | 'distance';
 
 export function PriceComparisonTable({ prices, className }: PriceComparisonTableProps) {
   const [sort, setSort] = useState<SortKey>('price');
+  const { formatPrice } = useCurrency();
 
   const sorted = [...prices].sort((a, b) => {
     if (sort === 'price') return a.pricePence - b.pricePence;
