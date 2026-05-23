@@ -15,7 +15,7 @@ interface TrendingGridProps {
   className?: string;
 }
 
-export function TrendingGrid({ category, limit = 8, className }: TrendingGridProps) {
+export function TrendingGrid({ category, limit = 4, className }: TrendingGridProps) {
   const { lat, lng } = useLocationStore();
 
   const { data, isLoading } = useQuery({
@@ -33,7 +33,7 @@ export function TrendingGrid({ category, limit = 8, className }: TrendingGridPro
 
   if (isLoading) {
     return (
-      <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ${className || ''}`}>
+      <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${className || ''}`}>
         {Array.from({ length: limit }).map((_, i) => <ProductCardSkeleton key={i} />)}
       </div>
     );
@@ -44,10 +44,10 @@ export function TrendingGrid({ category, limit = 8, className }: TrendingGridPro
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ${className || ''}`}
+      className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${className || ''}`}
     >
       {(data || []).map((product, i) => (
-        <motion.div key={product.id} variants={staggerItem} className={i === 0 ? 'md:col-span-2 md:row-span-2' : ''}>
+        <motion.div key={product.id} variants={staggerItem}>
           <ProductCard product={product} className="h-full" />
         </motion.div>
       ))}

@@ -219,7 +219,7 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
             <Button variant="ghost" size="sm">See all <ArrowRight size={14} /></Button>
           </Link>
         </div>
-        <TrendingGrid limit={6} />
+        <TrendingGrid limit={4} />
       </section>
 
       {/* AI Callout */}
@@ -270,7 +270,7 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
             <h2 className="text-2xl font-bold text-scout-dark">What everyone is buying</h2>
           </div>
         </div>
-        <TrendingGrid limit={5} />
+        <TrendingGrid limit={4} />
       </section>
     </div>
   );

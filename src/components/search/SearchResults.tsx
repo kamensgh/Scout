@@ -91,7 +91,7 @@ export function SearchResults({ query }: SearchResultsProps) {
     return (
       <div>
         <div className="h-9 mb-4" />
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 9 }).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       </div>
@@ -153,7 +153,7 @@ export function SearchResults({ query }: SearchResultsProps) {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {data.map(product => (
             <motion.div key={product.id} variants={staggerItem}>
