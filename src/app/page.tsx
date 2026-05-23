@@ -9,6 +9,7 @@ import { useLocationStore } from '@/store/location-store';
 import { SearchBar } from '@/components/search/SearchBar';
 import { TrendingGrid } from '@/components/products/TrendingGrid';
 import { StoreCard } from '@/components/stores/StoreCard';
+import { OnlineRetailerCard } from '@/components/stores/OnlineRetailerCard';
 import { Button } from '@/components/ui/Button';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { getCategories } from '@/lib/mock-data';
@@ -39,21 +40,25 @@ const CATEGORY_CHIPS = [
   'espresso machine for beginners',
 ];
 
+type StoreWithMeta = Store & { distanceKm?: number; openNow?: boolean; website?: string; tagline?: string };
+
 export default function HomePage() {
-  const { lat, lng, displayName } = useLocationStore();
+  const { lat, lng, country, displayName } = useLocationStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  const { data: nearbyStores } = useQuery({
-    queryKey: ['stores', lat, lng],
+  const cc = (country || 'gb').toLowerCase();
+
+  const { data: allStores } = useQuery<StoreWithMeta[]>({
+    queryKey: ['stores', lat, lng, cc],
     queryFn: async () => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ country: cc });
       if (lat) params.set('lat', String(lat));
       if (lng) params.set('lng', String(lng));
       const res = await fetch(`/api/stores?${params}`);
       const json = await res.json();
-      return json.data as (Store & { distanceKm?: number })[];
+      return json.data as StoreWithMeta[];
     },
     enabled: !!lat && !!lng,
   });
@@ -127,24 +132,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      <MainContent nearbyStores={nearbyStores || []} />
+      <MainContent allStores={allStores || []} country={cc} />
     </div>
   );
 }
 
-function MainContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: number })[] }) {
-  const physicalStores = nearbyStores.filter(s => s.type !== 'online').slice(0, 6);
+function MainContent({ allStores, country }: { allStores: StoreWithMeta[]; country: string }) {
+  const physicalStores = allStores.filter(s => s.type === 'physical').slice(0, 6);
+  const onlineStores = allStores.filter(s => s.type === 'online');
   const categories = getCategories();
 
   return (
     <div className="space-y-20 pb-20">
-      {/* Nearby Stores */}
+
+      {/* ── Online Retailers ── */}
+      {onlineStores.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="section-label mb-1">Shop online</p>
+              <h2 className="text-2xl font-bold text-scout-dark">Retailers near you</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {onlineStores.slice(0, 10).map(store => (
+              <OnlineRetailerCard key={store.id} store={store} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Nearby Physical Stores ── */}
       {physicalStores.length > 0 && (
         <section className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="section-label mb-1">Near you</p>
-              <h2 className="text-2xl font-bold text-scout-dark">Nearby Stores</h2>
+              <h2 className="text-2xl font-bold text-scout-dark">Physical stores</h2>
             </div>
             <Link href="/map">
               <Button variant="ghost" size="sm">View map <ArrowRight size={14} /></Button>
@@ -158,7 +182,7 @@ function MainContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: n
         </section>
       )}
 
-      {/* Browse by category */}
+      {/* ── Browse by category ── */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -192,10 +216,10 @@ function MainContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: n
         </div>
       </section>
 
-      {/* How it works */}
+      {/* ── How it works ── */}
       <HowItWorks />
 
-      {/* Biggest savings */}
+      {/* ── Biggest savings ── */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -209,7 +233,7 @@ function MainContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: n
         <TrendingGrid limit={4} queryOverride="best deals sale price drop discount electronics clearance" />
       </section>
 
-      {/* AI Callout */}
+      {/* ── AI Callout ── */}
       <section className="bg-scout-dark mx-4 rounded-3xl overflow-hidden">
         <div className="max-w-7xl mx-auto px-8 py-14 flex flex-col lg:flex-row items-start lg:items-center gap-8">
           <div className="flex-1">
@@ -249,7 +273,7 @@ function MainContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: n
         </div>
       </section>
 
-      {/* What everyone is buying */}
+      {/* ── What everyone is buying ── */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -265,23 +289,17 @@ function MainContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: n
 
 const HOW_IT_WORKS = [
   {
-    step: '01',
-    icon: Search,
-    title: 'Search anything',
+    step: '01', icon: Search, title: 'Search anything',
     desc: 'Type a product name, describe what you need, or ask the AI. Scout understands natural language.',
     color: 'bg-scout-accent/10 text-scout-accent',
   },
   {
-    step: '02',
-    icon: SlidersHorizontal,
-    title: 'Compare live prices',
+    step: '02', icon: SlidersHorizontal, title: 'Compare live prices',
     desc: 'See prices from 12+ retailers updated hourly — including in-store availability near you.',
     color: 'bg-scout-blue/10 text-scout-blue',
   },
   {
-    step: '03',
-    icon: ShoppingCart,
-    title: 'Buy with confidence',
+    step: '03', icon: ShoppingCart, title: 'Buy with confidence',
     desc: 'Go straight to the cheapest retailer with one click. Set alerts for price drops.',
     color: 'bg-scout-green/10 text-scout-green',
   },

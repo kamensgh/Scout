@@ -1,39 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Store } from '@/types';
+import { getRetailersForCountry } from '@/lib/retailers';
 
 export const dynamic = 'force-dynamic';
 
 const KNOWN_DOMAINS: Record<string, string> = {
-  amazon: 'amazon.com',
-  currys: 'currys.co.uk',
-  'john lewis': 'johnlewis.com',
-  argos: 'argos.co.uk',
-  ikea: 'ikea.com',
-  'ao.com': 'ao.com',
-  ao: 'ao.com',
-  ebay: 'ebay.com',
-  screwfix: 'screwfix.com',
-  'b&q': 'diy.com',
-  halfords: 'halfords.com',
-  wickes: 'wickes.co.uk',
-  apple: 'apple.com',
-  samsung: 'samsung.com',
-  'best buy': 'bestbuy.com',
-  bestbuy: 'bestbuy.com',
-  target: 'target.com',
-  walmart: 'walmart.com',
-  costco: 'costco.com',
-  'home depot': 'homedepot.com',
-  "lowe's": 'lowes.com',
-  lowes: 'lowes.com',
-  mediamarkt: 'mediamarkt.com',
-  fnac: 'fnac.com',
-  boots: 'boots.com',
-  tesco: 'tesco.com',
-  "sainsbury's": 'sainsburys.co.uk',
-  sainsburys: 'sainsburys.co.uk',
-  'marks and spencer': 'marksandspencer.com',
-  next: 'next.co.uk',
+  amazon: 'amazon.com', currys: 'currys.co.uk', 'john lewis': 'johnlewis.com',
+  argos: 'argos.co.uk', ikea: 'ikea.com', 'ao.com': 'ao.com', ao: 'ao.com',
+  ebay: 'ebay.com', screwfix: 'screwfix.com', 'b&q': 'diy.com',
+  halfords: 'halfords.com', wickes: 'wickes.co.uk', apple: 'apple.com',
+  samsung: 'samsung.com', 'best buy': 'bestbuy.com', bestbuy: 'bestbuy.com',
+  target: 'target.com', walmart: 'walmart.com', costco: 'costco.com',
+  'home depot': 'homedepot.com', "lowe's": 'lowes.com', lowes: 'lowes.com',
+  mediamarkt: 'mediamarkt.com', fnac: 'fnac.com', boots: 'boots.com',
+  tesco: 'tesco.com', "sainsbury's": 'sainsburys.co.uk',
+  'marks and spencer': 'marksandspencer.com', next: 'next.co.uk',
+  jumia: 'jumia.com', melcom: 'melcom.com.gh', konga: 'konga.com',
+  takealot: 'takealot.com', jbhifi: 'jbhifi.com.au', 'harvey norman': 'harveynorman.com.au',
+  flipkart: 'flipkart.com',
 };
 
 function guessLogoUrl(name: string): string {
@@ -59,19 +43,10 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export async function GET(req: NextRequest) {
-  const lat = req.nextUrl.searchParams.get('lat');
-  const lng = req.nextUrl.searchParams.get('lng');
-
-  if (!lat || !lng) return NextResponse.json({ data: [], error: null });
-
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!apiKey) return NextResponse.json({ data: [], error: 'Maps API not configured' });
-
+async function fetchPhysicalStores(lat: string, lng: string, apiKey: string): Promise<(Store & { distanceKm: number })[]> {
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
-
-  const keywords = ['electronics store', 'department store', 'home goods store', 'shopping mall'];
+  const keywords = ['electronics store', 'department store', 'phone shop', 'computer store', 'home appliances store'];
   const seen = new Map<string, Record<string, unknown>>();
 
   const fetchKeyword = async (keyword: string, radius: number) => {
@@ -85,15 +60,10 @@ export async function GET(req: NextRequest) {
     } catch { /* ignore */ }
   };
 
-  // First pass: 8km
   await Promise.all(keywords.map(kw => fetchKeyword(kw, 8000)));
+  if (seen.size < 3) await Promise.all(keywords.map(kw => fetchKeyword(kw, 25000)));
 
-  // Widen to 20km if too few results
-  if (seen.size < 4) {
-    await Promise.all(keywords.map(kw => fetchKeyword(kw, 20000)));
-  }
-
-  const stores: (Store & { distanceKm: number })[] = Array.from(seen.values())
+  return Array.from(seen.values())
     .map((p) => {
       const geo = p.geometry as { location: { lat: number; lng: number } };
       const placeLat = geo.location.lat;
@@ -108,13 +78,47 @@ export async function GET(req: NextRequest) {
         lat: placeLat,
         lng: placeLng,
         address: p.vicinity as string | undefined,
-        verified: false,
+        verified: (p.business_status as string) === 'OPERATIONAL',
         rating: (p.rating as number) || 4.0,
         distanceKm: haversineKm(latNum, lngNum, placeLat, placeLng),
-      };
+        openNow: (p.opening_hours as { open_now?: boolean } | undefined)?.open_now,
+      } as Store & { distanceKm: number; openNow?: boolean };
     })
     .sort((a, b) => a.distanceKm - b.distanceKm)
-    .slice(0, 12);
+    .slice(0, 10);
+}
 
-  return NextResponse.json({ data: stores, error: null });
+export async function GET(req: NextRequest) {
+  const lat = req.nextUrl.searchParams.get('lat');
+  const lng = req.nextUrl.searchParams.get('lng');
+  const country = req.nextUrl.searchParams.get('country') || '';
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return NextResponse.json({ data: [], error: 'Maps API not configured' });
+
+  // Fetch physical stores and online retailers in parallel
+  const [physicalStores, onlineRetailers] = await Promise.all([
+    lat && lng ? fetchPhysicalStores(lat, lng, apiKey) : Promise.resolve([]),
+    Promise.resolve(
+      getRetailersForCountry(country).map(r => ({
+        id: r.id,
+        name: r.name,
+        logo: r.logo,
+        abbreviation: r.abbreviation,
+        type: 'online' as const,
+        country: country,
+        verified: r.verified,
+        rating: 4.5,
+        deliveryDays: r.deliveryDays,
+        deliveryFee: 0,
+        website: r.url,
+        tagline: r.tagline,
+      } as Store & { website?: string; tagline?: string }))
+    ),
+  ]);
+
+  return NextResponse.json({
+    data: [...physicalStores, ...onlineRetailers],
+    error: null,
+  });
 }

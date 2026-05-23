@@ -44,11 +44,11 @@ export function LocationGate({ children }: { children: ReactNode }) {
 
     const run = async () => {
       await Promise.all([
-        // Nearby stores
+        // Nearby + online stores (include country for curated online retailers)
         queryClient.prefetchQuery({
-          queryKey: ['stores', lat, lng],
+          queryKey: ['stores', lat, lng, cc],
           queryFn: async () => {
-            const p = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+            const p = new URLSearchParams({ lat: String(lat), lng: String(lng), country: cc });
             const res = await fetch(`/api/stores?${p}`);
             return (await res.json()).data ?? [];
           },

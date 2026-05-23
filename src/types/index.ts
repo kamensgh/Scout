@@ -8,10 +8,13 @@ export interface Store {
   lat?: number;
   lng?: number;
   address?: string;
+  website?: string;
+  tagline?: string;
   deliveryDays?: number;
   deliveryFee?: number;
   verified: boolean;
   rating: number;
+  openNow?: boolean;
 }
 
 export interface StorePrice {
