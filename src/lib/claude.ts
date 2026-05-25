@@ -54,6 +54,46 @@ export async function generateComparisonSummary(products: Product[]): Promise<st
   return msg.content[0].type === 'text' ? msg.content[0].text : '';
 }
 
+export async function generateProductDetails(
+  name: string,
+  category: string,
+  lowestPricePence: number,
+  storeCount: number,
+): Promise<{ description: string; specs: Record<string, string> }> {
+  const anthropic = getClient();
+  const fallback = {
+    description: `${name} available from ${storeCount} retailer${storeCount !== 1 ? 's' : ''}.`,
+    specs: {} as Record<string, string>,
+  };
+
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
+      system: `You are a product database. Given a product name, category, and price, return a JSON object with:
+- "description": 2 sentences describing the product and its key benefits
+- "specs": 5-7 key specification key-value pairs relevant to that product category
+
+Return JSON only, no markdown fences.`,
+      messages: [{
+        role: 'user',
+        content: `Name: ${name}\nCategory: ${category}\nPrice: £${(lowestPricePence / 100).toFixed(2)}\nRetailers: ${storeCount}`,
+      }],
+    });
+
+    const text = msg.content[0].type === 'text' ? msg.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return fallback;
+    const parsed = JSON.parse(json);
+    return {
+      description: parsed.description || fallback.description,
+      specs: parsed.specs || {},
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export function createChatStream(messages: { role: 'user' | 'assistant'; content: string }[]) {
   const anthropic = getClient();
   return anthropic.messages.stream({

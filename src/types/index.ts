@@ -24,12 +24,16 @@ export interface StorePrice {
   storeAbbreviation: string;
   storeType: 'physical' | 'online' | 'both';
   pricePence: number;
+  rrpPence?: number; // store-specific RRP (for discount display)
   inStock: boolean;
   deliveryDays?: number;
   deliveryFeePence?: number;
   collectionAvailable?: boolean;
   url: string;
   lastUpdated: string;
+  listingName?: string; // retailer-specific product variant title
+  shippingText?: string; // e.g. "Free delivery · 30-day returns"
+  badge?: string; // e.g. "Best price"
 }
 
 export interface Product {
@@ -53,6 +57,8 @@ export interface Product {
   nearestStoreName?: string;
   nearestStoreDistance?: number;
   nearestStoreCity?: string;
+  googleProductId?: string;
+  immersiveProductToken?: string; // SerpAPI page token for google_immersive_product
 }
 
 export type ProductCategory =

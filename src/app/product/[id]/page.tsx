@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { notFound } from 'next/navigation';
 import { Heart, BarChart2, ArrowLeft, ChevronDown } from 'lucide-react';
@@ -32,6 +32,9 @@ export default function ProductPage({ params }: ProductPageProps) {
   const { isCompared, addProduct: addToCompare, removeProduct: removeFromCompare } = useComparisonStore();
   const { formatPrice } = useCurrency();
   const [specsOpen, setSpecsOpen] = useState(false);
+  const [aiDetails, setAiDetails] = useState<{ description: string; specs: Record<string, string> } | null>(null);
+
+  const { country } = useLocationStore();
 
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: queryKeys.product(id, lat, lng),
@@ -39,6 +42,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       const params = new URLSearchParams();
       if (lat) params.set('lat', String(lat));
       if (lng) params.set('lng', String(lng));
+      if (country) params.set('country', country.toLowerCase());
       const res = await fetch(`/api/products/${id}?${params}`);
       if (!res.ok) throw new Error('Not found');
       const json = await res.json();
@@ -47,14 +51,44 @@ export default function ProductPage({ params }: ProductPageProps) {
     },
   });
 
+  useEffect(() => {
+    if (!product) return;
+    // Skip AI call if SerpAPI knowledge_graph already gave us real specs
+    const hasRealSpecs = product.specs && Object.keys(product.specs).length > 0;
+    const hasRealDescription = product.description && !product.description.startsWith('Compare prices across');
+    if (hasRealSpecs && hasRealDescription) return;
+
+    let cancelled = false;
+    fetch('/api/ai/product-details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: product.name,
+        category: product.category,
+        lowestPricePence: product.lowestPricePence,
+        storeCount: product.storePrices.length,
+      }),
+    })
+      .then(r => r.json())
+      .then(json => { if (!cancelled && json.data) setAiDetails(json.data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [product?.id]);
+
   if (isLoading) return <ProductPageSkeleton />;
   if (error || !product) return notFound();
+
+  const description = aiDetails?.description || product.description;
+  const specs = aiDetails?.specs && Object.keys(aiDetails.specs).length > 0 ? aiDetails.specs : product.specs;
 
   const savings = product.rrpPence > product.lowestPricePence
     ? discountPercent(product.rrpPence, product.lowestPricePence)
     : 0;
   const saved = isProductSaved(product.id);
   const compared = isCompared(product.id);
+
+  // Find the cheapest store that has a real external URL
+  const bestBuy = product.storePrices.find(sp => sp.url && sp.url !== '#') ?? product.storePrices[0];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -84,7 +118,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               {product.trending && <Badge variant="trending">Trending</Badge>}
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold text-scout-dark mb-3 leading-tight">{product.name}</h1>
-            <p className="text-scout-muted text-sm leading-relaxed mb-4">{product.description}</p>
+            <p className="text-scout-muted text-sm leading-relaxed mb-4">{description}</p>
             <StarRating rating={product.rating} showValue reviewCount={product.reviewCount} />
           </div>
 
@@ -105,13 +139,13 @@ export default function ProductPage({ params }: ProductPageProps) {
           {/* Actions */}
           <div className="flex gap-3">
             <a
-              href={product.storePrices[0]?.url || '#'}
-              target="_blank"
+              href={bestBuy?.url || '#'}
+              target={bestBuy?.url && bestBuy.url !== '#' ? '_blank' : undefined}
               rel="noopener noreferrer"
               className="flex-1"
             >
               <Button variant="primary" size="lg" className="w-full">
-                Buy from {product.storePrices[0]?.storeName} · {formatPrice(product.lowestPricePence)}
+                Buy from {bestBuy?.storeName ?? 'retailer'} · {formatPrice(product.lowestPricePence)}
               </Button>
             </a>
             <Button
@@ -136,7 +170,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           <ProductAISummary product={product} />
 
           {/* Specs */}
-          {product.specs && (
+          {specs && Object.keys(specs).length > 0 && (
             <div className="border border-scout-border rounded-2xl overflow-hidden">
               <button
                 onClick={() => setSpecsOpen(!specsOpen)}
@@ -147,7 +181,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               </button>
               {specsOpen && (
                 <div className="border-t border-scout-border divide-y divide-scout-border">
-                  {Object.entries(product.specs).map(([key, val]) => (
+                  {Object.entries(specs).map(([key, val]) => (
                     <div key={key} className="flex px-5 py-3 text-sm">
                       <span className="w-40 text-scout-muted shrink-0">{key}</span>
                       <span className="text-scout-dark">{val}</span>
