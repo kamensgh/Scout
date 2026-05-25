@@ -1,0 +1,26 @@
+{
+  "name": "streakup",
+  "version": "1.0.0",
+  "description": "Habit streak tracker with real verification",
+  "type": "module",
+  "bin": {
+    "streakup": "./src/index.tsx"
+  },
+  "scripts": {
+    "start": "tsx src/index.tsx",
+    "dev": "tsx --watch src/index.tsx"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "date-fns": "^3.6.0",
+    "ink": "^4.4.1",
+    "ink-text-input": "^5.0.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "tsx": "^4.19.1",
+    "typescript": "^5"
+  }
+}
