@@ -73,6 +73,24 @@ test.describe('Navigation', () => {
   });
 });
 
+test.describe('Buy redirect', () => {
+  test('/api/buy/[id] 302-redirects to an external retailer URL', async ({ request }) => {
+    // Pick any product from a search so we have a real product ID
+    const searchRes = await request.get('/api/search?q=monitor&country=gb');
+    const json = await searchRes.json();
+    const productId = json?.data?.[0]?.id;
+    expect(productId).toBeTruthy();
+
+    const buyRes = await request.get(`/api/buy/${productId}?country=gb`, { maxRedirects: 0 });
+    expect([301, 302, 307, 308]).toContain(buyRes.status());
+    const location = buyRes.headers()['location'];
+    expect(location).toBeTruthy();
+    expect(location).toMatch(/^https?:\/\//);
+    // Should not redirect to Scout's own /product/ page when a real retailer exists
+    expect(location).not.toMatch(/google\.com\/search/);
+  });
+});
+
 test.describe('API health', () => {
   test('search API responds', async ({ request }) => {
     const res = await request.get('/api/search?q=headphones&country=gb');

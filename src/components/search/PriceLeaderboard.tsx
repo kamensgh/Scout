@@ -100,24 +100,20 @@ export function PriceLeaderboard({ query }: PriceLeaderboardProps) {
                 )}
               </div>
 
-              {/* Buy CTA */}
-              {cheapest?.url && cheapest.url !== '#' && !/google\.com\/search/i.test(cheapest.url) ? (
-                <a
-                  href={cheapest.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1.5 bg-scout-dark text-white text-xs font-medium rounded-lg hover:bg-scout-dark/90 transition-colors shrink-0"
-                >
-                  Buy <ExternalLink size={11} />
-                </a>
-              ) : (
-                <Link
-                  href={`/product/${product.id}`}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-scout-dark text-white text-xs font-medium rounded-lg hover:bg-scout-dark/90 transition-colors shrink-0"
-                >
-                  Buy <ExternalLink size={11} />
-                </Link>
-              )}
+              {/* Buy CTA — direct retailer URL when we have it, otherwise
+                  resolve via /api/buy/[id] which 302s to the real retailer */}
+              <a
+                href={
+                  cheapest?.url && cheapest.url !== '#' && !/google\.com\/search/i.test(cheapest.url)
+                    ? cheapest.url
+                    : `/api/buy/${product.id}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1.5 bg-scout-dark text-white text-xs font-medium rounded-lg hover:bg-scout-dark/90 transition-colors shrink-0"
+              >
+                Buy <ExternalLink size={11} />
+              </a>
             </div>
           );
         })}
