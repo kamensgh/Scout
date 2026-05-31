@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ExternalLink, ChevronDown, MapPin, ArrowUpDown } from 'lucide-react';
+import { ExternalLink, ChevronDown, ArrowUpDown } from 'lucide-react';
 import type { StorePrice } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { cn, formatDistance } from '@/lib/utils';

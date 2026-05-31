@@ -132,12 +132,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      <MainContent allStores={allStores || []} country={cc} />
+      <MainContent allStores={allStores || []} />
     </div>
   );
 }
 
-function MainContent({ allStores, country }: { allStores: StoreWithMeta[]; country: string }) {
+function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
   const physicalStores = allStores.filter(s => s.type === 'physical').slice(0, 6);
   const onlineStores = allStores.filter(s => s.type === 'online');
   const categories = getCategories();

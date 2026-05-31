@@ -80,7 +80,6 @@ export default function StorePage() {
   const store = storeData?.data;
 
   // Fetch products for this store
-  const productQuery = activeCategory || committed || 'electronics gadgets';
   const { data: productsData, isLoading } = useQuery<{ data: Product[] }>({
     queryKey: ['store-products', id, activeCategory, committed, country],
     queryFn: async () => {
