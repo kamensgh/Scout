@@ -101,7 +101,7 @@ export function PriceLeaderboard({ query }: PriceLeaderboardProps) {
               </div>
 
               {/* Buy CTA */}
-              {cheapest?.url && cheapest.url !== '#' ? (
+              {cheapest?.url && cheapest.url !== '#' && !/google\.com\/search/i.test(cheapest.url) ? (
                 <a
                   href={cheapest.url}
                   target="_blank"
@@ -113,9 +113,9 @@ export function PriceLeaderboard({ query }: PriceLeaderboardProps) {
               ) : (
                 <Link
                   href={`/product/${product.id}`}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-scout-bg text-scout-dark text-xs font-medium rounded-lg border border-scout-border hover:border-scout-dark transition-colors shrink-0"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-scout-dark text-white text-xs font-medium rounded-lg hover:bg-scout-dark/90 transition-colors shrink-0"
                 >
-                  View
+                  Buy <ExternalLink size={11} />
                 </Link>
               )}
             </div>
