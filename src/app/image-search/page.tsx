@@ -1,7 +1,12 @@
 import { ImageUpload } from '@/components/search/ImageUpload';
 
 export const metadata = {
-  title: 'Visual Search — Scout',
+  title: 'Visual Search',
+  description: 'Upload a photo of any product and Scout will find the best prices across all retailers instantly.',
+  openGraph: {
+    title: 'Visual Search — Scout',
+    description: 'Upload a photo of any product and Scout finds the best prices instantly.',
+  },
 };
 
 const EXAMPLES = [

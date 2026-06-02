@@ -1,8 +1,12 @@
 import { AIAssistant } from '@/components/ai/AIAssistant';
 
 export const metadata = {
-  title: 'AI Assistant — Scout',
-  description: 'Ask Scout anything about prices, products, and deals.',
+  title: 'AI Assistant',
+  description: 'Ask Scout anything about prices, products, and deals. Get instant recommendations and price comparisons.',
+  openGraph: {
+    title: 'AI Shopping Assistant — Scout',
+    description: 'Ask Scout anything about prices, products, and deals.',
+  },
 };
 
 export default function ChatPage() {
