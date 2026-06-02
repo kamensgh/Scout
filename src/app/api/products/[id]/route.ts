@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProductById, MOCK_STORES } from '@/lib/mock-data';
 import { cacheGet } from '@/lib/serp-cache';
-import { searchGoogleShopping } from '@/lib/serpapi';
-import { distanceKm } from '@/lib/utils';
+import { searchGoogleShopping, getImmersiveProductData, getStorePricesForProduct } from '@/lib/serpapi';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const id = params.id;
-  const lat = req.nextUrl.searchParams.get('lat') ? parseFloat(req.nextUrl.searchParams.get('lat')!) : null;
-  const lng = req.nextUrl.searchParams.get('lng') ? parseFloat(req.nextUrl.searchParams.get('lng')!) : null;
+  const country = (req.nextUrl.searchParams.get('country') || 'gb').toLowerCase();
 
-  let product = id.startsWith('serp-') ? cacheGet(id) : getProductById(id);
+  let product = cacheGet(id);
 
-  // Cache miss for serp product — reconstruct query from the slug and re-search
-  if (!product && id.startsWith('serp-')) {
+  if (!product) {
     const query = id.replace(/^serp-/, '').replace(/-/g, ' ');
-    const results = await searchGoogleShopping(query);
+    const results = await searchGoogleShopping(query, country);
     product = results.find(p => p.id === id) || results[0] || null;
   }
 
@@ -25,28 +21,34 @@ export async function GET(
     return NextResponse.json({ data: null, error: 'Product not found' }, { status: 404 });
   }
 
-  let enrichedPrices = product.storePrices;
-  if (lat && lng && !id.startsWith('serp-')) {
-    enrichedPrices = product.storePrices.map(sp => {
-      const store = MOCK_STORES.find(s => s.id === sp.storeId);
-      if (store?.lat && store?.lng) {
-        const km = distanceKm(lat, lng, store.lat, store.lng);
-        return { ...sp, distanceKm: km, distanceMiles: km * 0.621371 };
-      }
-      return sp;
-    }).sort((a, b) => {
-      const aOnline = a.storeType === 'online';
-      const bOnline = b.storeType === 'online';
-      if (aOnline && !bOnline) return 1;
-      if (!aOnline && bOnline) return -1;
-      const aDist = (a as typeof a & { distanceKm?: number }).distanceKm ?? Infinity;
-      const bDist = (b as typeof b & { distanceKm?: number }).distanceKm ?? Infinity;
-      return aDist - bDist;
-    });
+  // Prefer immersive product data — it has direct retailer links, real description, and multiple images
+  if (product.immersiveProductToken) {
+    const immersive = await getImmersiveProductData(product.immersiveProductToken);
+    if (immersive && immersive.storePrices.length > 0) {
+      const prices = immersive.storePrices;
+      product = {
+        ...product,
+        storePrices: prices,
+        lowestPricePence: prices[0].pricePence,
+        highestPricePence: prices[prices.length - 1].pricePence,
+        ...(immersive.description && { description: immersive.description }),
+        ...(immersive.brand && { brand: immersive.brand }),
+        ...(immersive.images.length > 0 && { images: immersive.images, imageUrl: immersive.images[0] }),
+      };
+      return NextResponse.json({ data: product, error: null });
+    }
   }
 
-  return NextResponse.json({
-    data: { ...product, storePrices: enrichedPrices },
-    error: null,
-  });
+  // Fallback: search google_shopping for the product name to get multi-retailer prices
+  const sellers = await getStorePricesForProduct(product.name, country);
+  if (sellers.length > 0) {
+    product = {
+      ...product,
+      storePrices: sellers,
+      lowestPricePence: sellers[0].pricePence,
+      highestPricePence: sellers[sellers.length - 1].pricePence,
+    };
+  }
+
+  return NextResponse.json({ data: product, error: null });
 }

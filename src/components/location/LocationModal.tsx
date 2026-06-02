@@ -1,42 +1,81 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Navigation, Search, Loader2, AlertCircle } from 'lucide-react';
+import { MapPin, Navigation, Search, Loader2, AlertCircle, X } from 'lucide-react';
 import { useLocationStore } from '@/store/location-store';
 import { Button } from '@/components/ui/Button';
+import { LoadingScreen } from './LoadingScreen';
 
-const SUGGESTIONS = [
-  'London, UK', 'Manchester, UK', 'Birmingham, UK', 'Edinburgh, UK',
-  'New York, US', 'Los Angeles, US', 'Chicago, US',
-  'Accra, Ghana', 'Lagos, Nigeria', 'Nairobi, Kenya',
-  'Sydney, Australia', 'Toronto, Canada',
-];
+interface Suggestion {
+  description: string;
+  placeId: string;
+}
 
 export function LocationModal() {
-  const { status, error, setFromText, setFromGPS } = useLocationStore();
-  const [input, setInput] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const { status, error, rawInput, lat, setFromText, setFromGPS, closePicker } = useLocationStore();
+  const [input, setInput] = useState(rawInput || '');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [acLoading, setAcLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (input.length < 2) { setSuggestions([]); return; }
-    const filtered = SUGGESTIONS.filter(s => s.toLowerCase().includes(input.toLowerCase()));
-    setSuggestions(filtered.slice(0, 5));
+    if (input.length < 2) {
+      setSuggestions([]);
+      setAcLoading(false);
+      return;
+    }
+
+    setAcLoading(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
+      try {
+        const res = await fetch(
+          `/api/location/autocomplete?input=${encodeURIComponent(input)}`,
+          { signal: abortRef.current.signal }
+        );
+        const json = await res.json();
+        setSuggestions(json.data || []);
+      } catch {
+        // ignore aborted requests
+      } finally {
+        setAcLoading(false);
+      }
+    }, 280);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [input]);
 
   const handleSubmit = useCallback(async (value?: string) => {
     const text = (value || input).trim();
     if (!text) return;
     setShowSuggestions(false);
+    setSuggestions([]);
     await setFromText(text);
   }, [input, setFromText]);
+
+  const handleSelect = useCallback((suggestion: Suggestion) => {
+    setInput(suggestion.description);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    handleSubmit(suggestion.description);
+  }, [handleSubmit]);
 
   const handleGPS = useCallback(async () => {
     await setFromGPS();
   }, [setFromGPS]);
 
-  const isLoading = status === 'detecting';
+  const hasExistingLocation = lat !== null;
+
+  // Show LoadingScreen while GPS / geocoding is running
+  if (status === 'detecting') return <LoadingScreen />;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-scout-bg">
@@ -44,8 +83,19 @@ export function LocationModal() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="w-full max-w-lg mx-4"
+        className="w-full max-w-lg mx-4 relative"
       >
+        {/* Close button — only shown when a location already exists */}
+        {hasExistingLocation && (
+          <button
+            onClick={closePicker}
+            className="absolute -top-12 right-0 w-9 h-9 rounded-full bg-white border border-scout-border flex items-center justify-center text-scout-muted hover:text-scout-dark hover:border-scout-dark transition-colors"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        )}
+
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-6">
@@ -58,7 +108,7 @@ export function LocationModal() {
             Find the best prices<br />near you
           </h1>
           <p className="text-scout-muted">
-            Scout checks 12 UK retailers for live prices, stock, and delivery.
+            Scout checks retailers near you for live prices, stock, and delivery.
           </p>
         </div>
 
@@ -70,13 +120,20 @@ export function LocationModal() {
               type="text"
               value={input}
               onChange={e => { setInput(e.target.value); setShowSuggestions(true); }}
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleSubmit();
+                if (e.key === 'Escape') setShowSuggestions(false);
+              }}
               onFocus={() => setShowSuggestions(true)}
-              placeholder="Enter postcode, city, or area..."
-              className="w-full pl-11 pr-4 py-4 bg-white border border-scout-border rounded-2xl text-scout-dark placeholder:text-scout-muted focus:outline-none focus:ring-2 focus:ring-scout-dark/20 focus:border-scout-dark transition-all text-base"
-              disabled={isLoading}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder="Enter postcode, city, or address..."
+              className="w-full pl-11 pr-10 py-4 bg-white border border-scout-border rounded-2xl text-scout-dark placeholder:text-scout-muted focus:outline-none focus:ring-2 focus:ring-scout-dark/20 focus:border-scout-dark transition-all text-base"
               autoFocus
+              autoComplete="off"
             />
+            {acLoading && (
+              <Loader2 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-scout-muted animate-spin" />
+            )}
           </div>
 
           {/* Autocomplete dropdown */}
@@ -91,12 +148,12 @@ export function LocationModal() {
               >
                 {suggestions.map((s) => (
                   <button
-                    key={s}
+                    key={s.placeId}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-scout-bg transition-colors text-sm"
-                    onMouseDown={e => { e.preventDefault(); setInput(s); handleSubmit(s); }}
+                    onMouseDown={e => { e.preventDefault(); handleSelect(s); }}
                   >
                     <MapPin size={14} className="text-scout-muted shrink-0" />
-                    <span className="text-scout-dark">{s}</span>
+                    <span className="text-scout-dark">{s.description}</span>
                   </button>
                 ))}
               </motion.div>
@@ -111,19 +168,18 @@ export function LocationModal() {
             size="lg"
             className="flex-1"
             onClick={() => handleSubmit()}
-            disabled={isLoading || !input.trim()}
+            disabled={!input.trim()}
           >
-            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-            {isLoading ? 'Locating…' : 'Find prices near me'}
+            <Search size={16} />
+            Find prices near me
           </Button>
           <Button
             variant="secondary"
             size="lg"
             onClick={handleGPS}
-            disabled={isLoading}
             title="Use my location"
           >
-            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Navigation size={16} />}
+            <Navigation size={16} />
           </Button>
         </div>
 
@@ -142,7 +198,6 @@ export function LocationModal() {
           )}
         </AnimatePresence>
 
-        {/* Hint text */}
         <p className="text-center text-xs text-scout-muted mt-6">
           Works worldwide — UK postcodes, city names, or full addresses
         </p>

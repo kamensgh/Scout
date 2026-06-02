@@ -6,12 +6,13 @@ import Link from 'next/link';
 import { useWishlistStore } from '@/store/wishlist-store';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/Button';
-import { formatPrice } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export default function SavedPage() {
   const [mounted, setMounted] = useState(false);
   const [tab, setTab] = useState<'saved' | 'alerts'>('saved');
   const { savedProducts, priceAlerts, removeAlert } = useWishlistStore();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;

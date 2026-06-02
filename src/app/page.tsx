@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, MapPin, Zap, MessageSquare, Search, SlidersHorizontal, ShoppingCart } from 'lucide-react';
+import { ArrowRight, MapPin, Zap, Search, SlidersHorizontal, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useLocationStore } from '@/store/location-store';
 import { SearchBar } from '@/components/search/SearchBar';
 import { TrendingGrid } from '@/components/products/TrendingGrid';
 import { StoreCard } from '@/components/stores/StoreCard';
-import { NearbyStoresGrid } from '@/components/discovery/NearbyStoresGrid';
-import { CategorySearchBar } from '@/components/discovery/CategorySearchBar';
+import { OnlineRetailerCard } from '@/components/stores/OnlineRetailerCard';
 import { Button } from '@/components/ui/Button';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { getCategories } from '@/lib/mock-data';
@@ -29,9 +28,9 @@ const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 const STATS = [
-  { value: '12', label: 'Retailers', sub: 'across the UK' },
+  { value: '50+', label: 'Retailers', sub: 'across the globe' },
   { value: '3.2M', label: 'Live prices', sub: 'updated hourly' },
-  { value: '1,400+', label: 'London stores', sub: 'with stock data' },
+  { value: '10,000+', label: 'Local stores', sub: 'with stock data' },
   { value: '18%', label: 'Average saving', sub: 'vs first retailer' },
 ];
 
@@ -41,22 +40,25 @@ const CATEGORY_CHIPS = [
   'espresso machine for beginners',
 ];
 
+type StoreWithMeta = Store & { distanceKm?: number; openNow?: boolean; website?: string; tagline?: string };
+
 export default function HomePage() {
-  const { lat, lng, displayName, dataRegion } = useLocationStore();
+  const { lat, lng, country, displayName } = useLocationStore();
   const [mounted, setMounted] = useState(false);
-  const [sparseCategory, setSparseCategory] = useState('electronics');
 
   useEffect(() => { setMounted(true); }, []);
 
-  const { data: nearbyStores } = useQuery({
-    queryKey: ['stores', lat, lng],
+  const cc = (country || 'gb').toLowerCase();
+
+  const { data: allStores } = useQuery<StoreWithMeta[]>({
+    queryKey: ['stores', lat, lng, cc],
     queryFn: async () => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ country: cc });
       if (lat) params.set('lat', String(lat));
       if (lng) params.set('lng', String(lng));
       const res = await fetch(`/api/stores?${params}`);
       const json = await res.json();
-      return json.data as (Store & { distanceKm?: number })[];
+      return json.data as StoreWithMeta[];
     },
     enabled: !!lat && !!lng,
   });
@@ -67,7 +69,6 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* ── HERO ── */}
       <section className="relative pt-12 pb-20 px-4 overflow-hidden">
-        {/* Background decoration */}
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-scout-accent/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-scout-blue/5 rounded-full blur-3xl" />
@@ -76,7 +77,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6">
             <motion.p variants={staggerItem} className="section-label">
-              Scout · Vol. 04 · {displayName?.split(',').slice(-1)[0]?.trim() || 'London'}
+              Scout · Vol. 04 · {displayName?.split(',').slice(-1)[0]?.trim() || 'Worldwide'}
             </motion.p>
 
             <motion.h1
@@ -87,14 +88,11 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p variants={staggerItem} className="text-lg text-scout-muted max-w-xl">
-              Scout reads live prices, stock and delivery from{' '}
-              {dataRegion === 'rich' ? 'twelve UK retailers' : 'local stores near you'} — so you can stop juggling tabs and just buy the right thing.
+              Scout reads live prices, stock and delivery from retailers near you — so you can stop juggling tabs and just buy the right thing.
             </motion.p>
 
-            {/* Search bar */}
             <motion.div variants={staggerItem} className="max-w-2xl">
               <SearchBar size="hero" placeholder="Headphones, IKEA bed, 4K TV…" />
-              {/* Quick chips */}
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 <span className="text-xs text-scout-muted">Try</span>
                 {CATEGORY_CHIPS.map(chip => (
@@ -109,7 +107,6 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* Location indicator */}
             {displayName && (
               <motion.div variants={staggerItem} className="flex items-center gap-1.5 text-sm text-scout-muted">
                 <MapPin size={14} />
@@ -118,7 +115,6 @@ export default function HomePage() {
             )}
           </motion.div>
 
-          {/* Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -136,28 +132,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {dataRegion === 'rich' ? (
-        <RichHomeContent nearbyStores={nearbyStores || []} />
-      ) : (
-        <SparseHomeContent category={sparseCategory} onCategoryChange={setSparseCategory} />
-      )}
+      <MainContent allStores={allStores || []} />
     </div>
   );
 }
 
-function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm?: number })[] }) {
-  const physicalStores = nearbyStores.filter(s => s.type !== 'online').slice(0, 6);
+function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
+  const physicalStores = allStores.filter(s => s.type === 'physical').slice(0, 6);
+  const onlineStores = allStores.filter(s => s.type === 'online');
   const categories = getCategories();
 
   return (
     <div className="space-y-20 pb-20">
-      {/* Nearby Stores */}
+
+      {/* ── Online Retailers ── */}
+      {onlineStores.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <p className="section-label mb-1">Shop online</p>
+              <h2 className="text-2xl font-bold text-scout-dark">Retailers near you</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {onlineStores.slice(0, 10).map(store => (
+              <OnlineRetailerCard key={store.id} store={store} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Nearby Physical Stores ── */}
       {physicalStores.length > 0 && (
         <section className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="section-label mb-1">Near you</p>
-              <h2 className="text-2xl font-bold text-scout-dark">Nearby Stores</h2>
+              <h2 className="text-2xl font-bold text-scout-dark">Physical stores</h2>
             </div>
             <Link href="/map">
               <Button variant="ghost" size="sm">View map <ArrowRight size={14} /></Button>
@@ -171,7 +182,7 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
         </section>
       )}
 
-      {/* Browse by category */}
+      {/* ── Browse by category ── */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -205,10 +216,10 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
         </div>
       </section>
 
-      {/* How it works */}
+      {/* ── How it works ── */}
       <HowItWorks />
 
-      {/* Trending */}
+      {/* ── Biggest savings ── */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -219,10 +230,10 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
             <Button variant="ghost" size="sm">See all <ArrowRight size={14} /></Button>
           </Link>
         </div>
-        <TrendingGrid limit={4} />
+        <TrendingGrid limit={4} queryOverride="best deals sale price drop discount electronics clearance" />
       </section>
 
-      {/* AI Callout */}
+      {/* ── AI Callout ── */}
       <section className="bg-scout-dark mx-4 rounded-3xl overflow-hidden">
         <div className="max-w-7xl mx-auto px-8 py-14 flex flex-col lg:flex-row items-start lg:items-center gap-8">
           <div className="flex-1">
@@ -262,7 +273,7 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
         </div>
       </section>
 
-      {/* What everyone is buying */}
+      {/* ── What everyone is buying ── */}
       <section className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -270,7 +281,7 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
             <h2 className="text-2xl font-bold text-scout-dark">What everyone is buying</h2>
           </div>
         </div>
-        <TrendingGrid limit={4} />
+        <TrendingGrid limit={4} queryOverride="most popular bestseller trending gadgets electronics 2024" />
       </section>
     </div>
   );
@@ -278,23 +289,17 @@ function RichHomeContent({ nearbyStores }: { nearbyStores: (Store & { distanceKm
 
 const HOW_IT_WORKS = [
   {
-    step: '01',
-    icon: Search,
-    title: 'Search anything',
+    step: '01', icon: Search, title: 'Search anything',
     desc: 'Type a product name, describe what you need, or ask the AI. Scout understands natural language.',
     color: 'bg-scout-accent/10 text-scout-accent',
   },
   {
-    step: '02',
-    icon: SlidersHorizontal,
-    title: 'Compare live prices',
+    step: '02', icon: SlidersHorizontal, title: 'Compare live prices',
     desc: 'See prices from 12+ retailers updated hourly — including in-store availability near you.',
     color: 'bg-scout-blue/10 text-scout-blue',
   },
   {
-    step: '03',
-    icon: ShoppingCart,
-    title: 'Buy with confidence',
+    step: '03', icon: ShoppingCart, title: 'Buy with confidence',
     desc: 'Go straight to the cheapest retailer with one click. Set alerts for price drops.',
     color: 'bg-scout-green/10 text-scout-green',
   },
@@ -310,7 +315,6 @@ function HowItWorks() {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-        {/* connector line on md+ */}
         <div className="hidden md:block absolute top-10 left-[calc(33.3%+1rem)] right-[calc(33.3%+1rem)] h-px border-t-2 border-dashed border-scout-border z-0" />
         {HOW_IT_WORKS.map(({ step, icon: Icon, title, desc, color }) => (
           <motion.div
@@ -333,7 +337,6 @@ function HowItWorks() {
         ))}
       </div>
 
-      {/* Social proof strip */}
       <div className="mt-8 bg-scout-bg rounded-2xl px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-sm text-scout-muted text-center sm:text-left">
           Trusted by <strong className="text-scout-dark">142,000+</strong> shoppers last month · Average saving of <strong className="text-scout-dark">£47</strong> per order
@@ -343,35 +346,5 @@ function HowItWorks() {
         </Link>
       </div>
     </section>
-  );
-}
-
-function SparseHomeContent({ category, onCategoryChange }: { category: string; onCategoryChange: (c: string) => void }) {
-  return (
-    <div className="space-y-12 pb-20">
-      <section className="max-w-7xl mx-auto px-4">
-        <div className="mb-6">
-          <p className="section-label mb-1">Discovery</p>
-          <h2 className="text-2xl font-bold text-scout-dark mb-2">Find stores near you</h2>
-          <p className="text-scout-muted text-sm">Scout is searching Google Maps for real stores in your area.</p>
-        </div>
-        <div className="mb-6">
-          <CategorySearchBar onCategoryChange={onCategoryChange} defaultCategory={category} />
-        </div>
-        <NearbyStoresGrid category={category} />
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 bg-scout-dark rounded-3xl p-8">
-        <div className="flex items-center gap-2 mb-3">
-          <MessageSquare size={18} className="text-white/70" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-white/50">AI Assistant</span>
-        </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Can&apos;t find what you need?</h2>
-        <p className="text-white/60 mb-4">Ask our AI assistant for local shopping advice and alternatives.</p>
-        <Link href="/chat">
-          <Button variant="accent">Open Assistant <ArrowRight size={14} /></Button>
-        </Link>
-      </section>
-    </div>
   );
 }

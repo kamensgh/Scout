@@ -26,7 +26,7 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({ query }: SearchResultsProps) {
-  const { lat, lng } = useLocationStore();
+  const { lat, lng, country } = useLocationStore();
   const { filters, sortBy, setSortBy, setFilters } = useSearchStore();
   const autoSelectedRef = useRef(false);
 
@@ -36,6 +36,7 @@ export function SearchResults({ query }: SearchResultsProps) {
       const params = new URLSearchParams({ q: query });
       if (lat) params.set('lat', String(lat));
       if (lng) params.set('lng', String(lng));
+      if (country) params.set('country', country.toLowerCase());
       const res = await fetch(`/api/search?${params}`);
       const json = await res.json();
       return json.data as Product[];

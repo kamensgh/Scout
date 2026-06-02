@@ -1,0 +1,8 @@
+.next
+.playwright-mcp
+node_modules
+.git
+*.png
+*.jpg
+*.jpeg
+.DS_Store

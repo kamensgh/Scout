@@ -15,9 +15,12 @@ interface LocationState {
   method: 'gps' | 'text' | null;
   status: 'idle' | 'detecting' | 'resolved' | 'error';
   error: string | null;
+  isPickerOpen: boolean;
   setFromText: (input: string) => Promise<void>;
   setFromGPS: () => Promise<void>;
   clear: () => void;
+  openPicker: () => void;
+  closePicker: () => void;
 }
 
 export const useLocationStore = create<LocationState>()(
@@ -34,6 +37,7 @@ export const useLocationStore = create<LocationState>()(
       method: null,
       status: 'idle',
       error: null,
+      isPickerOpen: false,
 
       setFromText: async (input: string) => {
         set({ status: 'detecting', error: null, rawInput: input });
@@ -75,8 +79,10 @@ export const useLocationStore = create<LocationState>()(
       clear: () => set({
         rawInput: null, lat: null, lng: null, city: null, country: null,
         countryName: null, displayName: null, dataRegion: 'rich',
-        method: null, status: 'idle', error: null,
+        method: null, status: 'idle', error: null, isPickerOpen: false,
       }),
+      openPicker: () => set({ isPickerOpen: true }),
+      closePicker: () => set({ isPickerOpen: false }),
     }),
     { name: 'scout-location', partialize: (state) => ({
       rawInput: state.rawInput, lat: state.lat, lng: state.lng,
