@@ -77,7 +77,7 @@ export function SearchBar({ className, size = 'default', placeholder, defaultVal
         <button
           onClick={() => handleSubmit(query)}
           className={cn(
-            'flex items-center gap-1.5 font-medium rounded-xl transition-colors',
+            'flex items-center gap-1.5 font-medium rounded-none transition-colors',
             isHero ? 'bg-scout-dark text-white px-5 py-2.5 text-sm hover:bg-scout-dark/90' : 'bg-scout-dark text-white px-3 py-1.5 text-xs hover:bg-scout-dark/90'
           )}
         >

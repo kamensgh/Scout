@@ -33,12 +33,16 @@ const config: Config = {
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
-        sm: '3px',
+        // Pixel-verified against the design plan: card/container surfaces (product
+        // cards, category tiles, search bar, dropdowns, the AI section) are dead
+        // sharp — 0. Only standalone buttons keep a touch of softness (lg/xl below);
+        // pills/chips/avatars use Tailwind's built-in `rounded-full`, untouched.
+        sm: '2px',
         DEFAULT: '4px',
-        lg: '8px',
-        xl: '10px',
-        '2xl': '12px',
-        '3xl': '16px',
+        lg: '6px',
+        xl: '8px',
+        '2xl': '0px',
+        '3xl': '0px',
       },
       boxShadow: {
         card: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',

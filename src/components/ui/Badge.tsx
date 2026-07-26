@@ -8,7 +8,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         category: 'bg-black/8 text-scout-dark',
-        'price-drop': 'bg-scout-sale-soft text-scout-sale',
+        'price-drop': 'bg-scout-sale-soft text-scout-sale rounded-none',
         'in-stock': 'bg-scout-green/10 text-scout-green',
         'out-of-stock': 'bg-scout-red/10 text-scout-red',
         trending: 'bg-scout-accent/10 text-scout-accent',
