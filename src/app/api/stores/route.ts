@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // img.logo.dev now requires a paid API token (returns 401 unconditionally without one,
 // even for real domains) — there's no token configured, so every lookup is a guaranteed
 // failure. Skip the request entirely and let callers render the initials badge fallback.
-function guessLogoUrl(_name: string): string {
+function guessLogoUrl(): string {
   return '';
 }
 
@@ -53,7 +53,7 @@ async function fetchPhysicalStores(lat: string, lng: string, apiKey: string): Pr
       return {
         id: p.place_id as string,
         name: p.name as string,
-        logo: guessLogoUrl(p.name as string),
+        logo: guessLogoUrl(),
         abbreviation: makeAbbreviation(p.name as string),
         type: 'physical' as const,
         country: '',
