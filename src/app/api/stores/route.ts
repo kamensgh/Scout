@@ -4,29 +4,11 @@ import { getRetailersForCountry } from '@/lib/retailers';
 
 export const dynamic = 'force-dynamic';
 
-const KNOWN_DOMAINS: Record<string, string> = {
-  amazon: 'amazon.com', currys: 'currys.co.uk', 'john lewis': 'johnlewis.com',
-  argos: 'argos.co.uk', ikea: 'ikea.com', 'ao.com': 'ao.com', ao: 'ao.com',
-  ebay: 'ebay.com', screwfix: 'screwfix.com', 'b&q': 'diy.com',
-  halfords: 'halfords.com', wickes: 'wickes.co.uk', apple: 'apple.com',
-  samsung: 'samsung.com', 'best buy': 'bestbuy.com', bestbuy: 'bestbuy.com',
-  target: 'target.com', walmart: 'walmart.com', costco: 'costco.com',
-  'home depot': 'homedepot.com', "lowe's": 'lowes.com', lowes: 'lowes.com',
-  mediamarkt: 'mediamarkt.com', fnac: 'fnac.com', boots: 'boots.com',
-  tesco: 'tesco.com', "sainsbury's": 'sainsburys.co.uk',
-  'marks and spencer': 'marksandspencer.com', next: 'next.co.uk',
-  jumia: 'jumia.com', melcom: 'melcom.com.gh', konga: 'konga.com',
-  takealot: 'takealot.com', jbhifi: 'jbhifi.com.au', 'harvey norman': 'harveynorman.com.au',
-  flipkart: 'flipkart.com',
-};
-
-function guessLogoUrl(name: string): string {
-  const lower = name.toLowerCase();
-  for (const [key, domain] of Object.entries(KNOWN_DOMAINS)) {
-    if (lower.includes(key)) return `https://img.logo.dev/${domain}`;
-  }
-  const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return `https://img.logo.dev/${slug}.com`;
+// img.logo.dev now requires a paid API token (returns 401 unconditionally without one,
+// even for real domains) — there's no token configured, so every lookup is a guaranteed
+// failure. Skip the request entirely and let callers render the initials badge fallback.
+function guessLogoUrl(_name: string): string {
+  return '';
 }
 
 function makeAbbreviation(name: string): string {
@@ -113,6 +95,7 @@ export async function GET(req: NextRequest) {
         deliveryFee: 0,
         website: r.url,
         tagline: r.tagline,
+        categories: r.categories,
       } as Store & { website?: string; tagline?: string }))
     ),
   ]);

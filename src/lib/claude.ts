@@ -41,13 +41,13 @@ export async function parseSearchIntent(query: string): Promise<ParsedSearchInte
 export async function generateComparisonSummary(products: Product[]): Promise<string> {
   const anthropic = getClient();
   const summaries = products.map(
-    (p) => `${p.name} — lowest £${(p.lowestPricePence / 100).toFixed(2)}, rated ${p.rating}/5`
+    (p) => `${p.name} — lowest price ${(p.lowestPricePence / 100).toFixed(2)}, rated ${p.rating}/5`
   );
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 512,
-    system: 'You are a concise UK shopping assistant. Write 2-3 sentences comparing these products. Focus on value for money. British English.',
+    system: 'You are a concise shopping assistant. Write 2-3 sentences comparing these products. Focus on value for money.',
     messages: [{ role: 'user', content: summaries.join('\n') }],
   });
 
@@ -77,7 +77,7 @@ export async function generateProductDetails(
 Return JSON only, no markdown fences.`,
       messages: [{
         role: 'user',
-        content: `Name: ${name}\nCategory: ${category}\nPrice: £${(lowestPricePence / 100).toFixed(2)}\nRetailers: ${storeCount}`,
+        content: `Name: ${name}\nCategory: ${category}\nPrice: ${(lowestPricePence / 100).toFixed(2)}\nRetailers: ${storeCount}`,
       }],
     });
 
@@ -99,7 +99,7 @@ export function createChatStream(messages: { role: 'user' | 'assistant'; content
   return anthropic.messages.stream({
     model: 'claude-sonnet-4-6',
     max_tokens: 1024,
-    system: `You are Scout's AI shopping assistant. Help UK shoppers find the best deals. Be concise, friendly, and value-focused. Use British English. When recommending products, mention current prices and which retailers stock them.`,
+    system: `You are Scout's AI shopping assistant. Help shoppers worldwide find the best deals. Be concise, friendly, and value-focused. When recommending products, mention current prices and which retailers stock them.`,
     messages,
   });
 }

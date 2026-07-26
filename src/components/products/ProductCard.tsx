@@ -4,14 +4,31 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, BarChart2, MapPin, Package } from 'lucide-react';
+import { Heart, MapPin, Package } from 'lucide-react';
+import { useSession, signIn } from 'next-auth/react';
+import type { StorePrice } from '@/types';
 import type { Product } from '@/types';
 import { useWishlistStore } from '@/store/wishlist-store';
-import { useComparisonStore } from '@/store/comparison-store';
 import { StarRating } from '@/components/ui/StarRating';
 import { Badge } from '@/components/ui/Badge';
 import { cn, discountPercent, formatDistance } from '@/lib/utils';
 import { useCurrency } from '@/hooks/useCurrency';
+
+function StoreAvatar({ sp }: { sp: StorePrice }) {
+  const [err, setErr] = useState(false);
+  if (sp.storeLogo && !err) {
+    return (
+      <span className="w-7 h-7 rounded-md bg-white border border-scout-border flex items-center justify-center overflow-hidden" title={sp.storeName}>
+        <Image src={sp.storeLogo} alt={sp.storeName} width={20} height={20} className="object-contain" onError={() => setErr(true)} />
+      </span>
+    );
+  }
+  return (
+    <span className="w-7 h-7 rounded-md bg-scout-bg border border-scout-border text-xs font-bold text-scout-muted flex items-center justify-center" title={sp.storeName}>
+      {sp.storeAbbreviation}
+    </span>
+  );
+}
 
 interface ProductCardProps {
   product: Product;
@@ -22,11 +39,10 @@ interface ProductCardProps {
 export function ProductCard({ product, className, showDistance = true }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const { isProductSaved, addProduct, removeProduct } = useWishlistStore();
-  const { isCompared, addProduct: addToCompare, removeProduct: removeFromCompare } = useComparisonStore();
   const { formatPrice } = useCurrency();
+  const { data: session } = useSession();
 
-  const saved = isProductSaved(product.id);
-  const compared = isCompared(product.id);
+  const saved = session ? isProductSaved(product.id) : false;
 
   const savings = product.rrpPence > product.lowestPricePence
     ? discountPercent(product.rrpPence, product.lowestPricePence)
@@ -72,11 +88,12 @@ export function ProductCard({ product, className, showDistance = true }: Product
         </div>
       </Link>
 
-      {/* Action buttons (visible on hover) */}
-      <div className="absolute top-3 right-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Wishlist toggle — always visible; touch devices have no hover state */}
+      <div className="absolute top-3 right-3">
         <button
           onClick={e => {
             e.preventDefault();
+            if (!session) { signIn('google'); return; }
             if (saved) { removeProduct(product.id); } else { addProduct(product); }
           }}
           className={cn(
@@ -86,19 +103,6 @@ export function ProductCard({ product, className, showDistance = true }: Product
           aria-label={saved ? 'Remove from saved' : 'Save'}
         >
           <Heart size={15} fill={saved ? 'currentColor' : 'none'} />
-        </button>
-        <button
-          onClick={e => {
-            e.preventDefault();
-            if (compared) { removeFromCompare(product.id); } else { addToCompare(product.id); }
-          }}
-          className={cn(
-            'w-8 h-8 rounded-full bg-white shadow flex items-center justify-center transition-colors',
-            compared ? 'text-scout-blue' : 'text-scout-muted hover:text-scout-blue'
-          )}
-          aria-label="Compare"
-        >
-          <BarChart2 size={15} />
         </button>
       </div>
 
@@ -130,13 +134,7 @@ export function ProductCard({ product, className, showDistance = true }: Product
         <div className="flex items-center justify-between">
           <div className="flex gap-1">
             {topStores.map(sp => (
-              <span
-                key={sp.storeId}
-                className="w-7 h-7 rounded-md bg-scout-bg border border-scout-border text-xs font-bold text-scout-muted flex items-center justify-center"
-                title={sp.storeName}
-              >
-                {sp.storeAbbreviation}
-              </span>
+              <StoreAvatar key={sp.storeId} sp={sp} />
             ))}
             {product.storePrices.length > 3 && (
               <span className="w-7 h-7 rounded-md bg-scout-bg border border-scout-border text-xs text-scout-muted flex items-center justify-center">
@@ -144,7 +142,7 @@ export function ProductCard({ product, className, showDistance = true }: Product
               </span>
             )}
           </div>
-          <span className="text-xs text-scout-muted">{product.storePrices.length} stores</span>
+          <span className="text-xs text-scout-muted">{product.storePrices.length} store{product.storePrices.length !== 1 ? 's' : ''}</span>
         </div>
       </Link>
     </motion.div>

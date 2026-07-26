@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { getCategories } from '@/lib/mock-data';
 import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/Skeleton';
 import type { Store } from '@/types';
 
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -50,7 +51,7 @@ export default function HomePage() {
 
   const cc = (country || 'gb').toLowerCase();
 
-  const { data: allStores } = useQuery<StoreWithMeta[]>({
+  const { data: allStores, isLoading: storesLoading } = useQuery<StoreWithMeta[]>({
     queryKey: ['stores', lat, lng, cc],
     queryFn: async () => {
       const params = new URLSearchParams({ country: cc });
@@ -82,7 +83,7 @@ export default function HomePage() {
 
             <motion.h1
               variants={staggerItem}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-scout-dark tracking-tight leading-none"
+              className="text-5xl sm:text-6xl lg:text-7xl font-serif italic text-scout-dark tracking-tight leading-none"
             >
               Search once.<br />Pay less.
             </motion.h1>
@@ -123,7 +124,7 @@ export default function HomePage() {
           >
             {STATS.map(({ value, label, sub }) => (
               <div key={label}>
-                <p className="text-3xl font-bold text-scout-dark">{value}</p>
+                <p className="text-3xl font-serif text-scout-dark">{value}</p>
                 <p className="text-sm font-medium text-scout-dark">{label}</p>
                 <p className="text-xs text-scout-muted">{sub}</p>
               </div>
@@ -132,12 +133,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      <MainContent allStores={allStores || []} />
+      <MainContent allStores={allStores || []} isLoading={storesLoading && !!lat && !!lng} />
     </div>
   );
 }
 
-function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
+function OnlineRetailerCardSkeleton() {
+  return (
+    <div className="bg-white border border-scout-border rounded-2xl p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <Skeleton className="w-12 h-12 rounded-xl" />
+        <Skeleton className="h-4 w-14" />
+      </div>
+      <div className="space-y-1.5">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-2/3" />
+      </div>
+      <div className="mt-auto pt-2 border-t border-scout-border flex items-center justify-between">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-14" />
+      </div>
+    </div>
+  );
+}
+
+function StoreCardSkeleton() {
+  return (
+    <div className="bg-white border border-scout-border rounded-2xl p-4">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+        <Skeleton className="h-5 w-12 rounded-full" />
+      </div>
+      <div className="space-y-1.5">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+        <Skeleton className="h-3 w-3/4" />
+      </div>
+    </div>
+  );
+}
+
+function MainContent({ allStores, isLoading }: { allStores: StoreWithMeta[]; isLoading: boolean }) {
   const physicalStores = allStores.filter(s => s.type === 'physical').slice(0, 6);
   const onlineStores = allStores.filter(s => s.type === 'online');
   const categories = getCategories();
@@ -146,39 +189,51 @@ function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
     <div className="space-y-20 pb-20">
 
       {/* ── Online Retailers ── */}
-      {onlineStores.length > 0 && (
+      {(isLoading || onlineStores.length > 0) && (
         <section className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="section-label mb-1">Shop online</p>
-              <h2 className="text-2xl font-bold text-scout-dark">Retailers near you</h2>
+              <h2 className="text-2xl font-serif text-scout-dark">Retailers near you</h2>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {onlineStores.slice(0, 10).map(store => (
-              <OnlineRetailerCard key={store.id} store={store} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {Array.from({ length: 5 }).map((_, i) => <OnlineRetailerCardSkeleton key={i} />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {onlineStores.slice(0, 10).map(store => (
+                <OnlineRetailerCard key={store.id} store={store} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
       {/* ── Nearby Physical Stores ── */}
-      {physicalStores.length > 0 && (
+      {(isLoading || physicalStores.length > 0) && (
         <section className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-6">
             <div>
               <p className="section-label mb-1">Near you</p>
-              <h2 className="text-2xl font-bold text-scout-dark">Physical stores</h2>
+              <h2 className="text-2xl font-serif text-scout-dark">Physical stores</h2>
             </div>
             <Link href="/map">
               <Button variant="ghost" size="sm">View map <ArrowRight size={14} /></Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {physicalStores.map(store => (
-              <StoreCard key={store.id} store={store} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => <StoreCardSkeleton key={i} />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {physicalStores.map(store => (
+                <StoreCard key={store.id} store={store} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -187,7 +242,7 @@ function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="section-label mb-1">Catalogue</p>
-            <h2 className="text-2xl font-bold text-scout-dark">Browse by category</h2>
+            <h2 className="text-2xl font-serif text-scout-dark">Browse by category</h2>
           </div>
           <Link href="/trending">
             <Button variant="ghost" size="sm">All categories <ArrowRight size={14} /></Button>
@@ -224,7 +279,7 @@ function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="section-label mb-1">Today</p>
-            <h2 className="text-2xl font-bold text-scout-dark">Biggest savings right now</h2>
+            <h2 className="text-2xl font-serif text-scout-dark">Biggest savings right now</h2>
           </div>
           <Link href="/trending">
             <Button variant="ghost" size="sm">See all <ArrowRight size={14} /></Button>
@@ -243,7 +298,7 @@ function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
               </div>
               <span className="text-xs font-semibold uppercase tracking-widest text-white/50">AI Assistant</span>
             </div>
-            <h2 className="text-3xl font-bold text-white mb-3">Ask Scout anything.</h2>
+            <h2 className="text-3xl font-serif italic text-white mb-3">Ask Scout anything.</h2>
             <p className="text-white/60 mb-6 max-w-md">
               &ldquo;What&apos;s the best espresso machine under £200?&rdquo; &ldquo;Compare the V15 to the V11.&rdquo; Scout reads thousands of reviews and live prices to answer.
             </p>
@@ -278,7 +333,7 @@ function MainContent({ allStores }: { allStores: StoreWithMeta[] }) {
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="section-label mb-1">Trending</p>
-            <h2 className="text-2xl font-bold text-scout-dark">What everyone is buying</h2>
+            <h2 className="text-2xl font-serif text-scout-dark">What everyone is buying</h2>
           </div>
         </div>
         <TrendingGrid limit={4} queryOverride="most popular bestseller trending gadgets electronics 2024" />
@@ -311,7 +366,7 @@ function HowItWorks() {
       <div className="flex items-center justify-between mb-10">
         <div>
           <p className="section-label mb-1">Process</p>
-          <h2 className="text-2xl font-bold text-scout-dark">How Scout works</h2>
+          <h2 className="text-2xl font-serif text-scout-dark">How Scout works</h2>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
@@ -329,7 +384,7 @@ function HowItWorks() {
               <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center shrink-0`}>
                 <Icon size={22} />
               </div>
-              <span className="text-4xl font-bold text-scout-border mt-1 select-none">{step}</span>
+              <span className="text-4xl font-mono text-scout-border mt-1 select-none">{step}</span>
             </div>
             <h3 className="text-base font-semibold text-scout-dark mb-2">{title}</h3>
             <p className="text-sm text-scout-muted leading-relaxed">{desc}</p>

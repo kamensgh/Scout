@@ -9,9 +9,22 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import type { Store } from '@/types';
 import { queryKeys } from '@/lib/query-keys';
 
+const CATEGORY_FILTERS = [
+  { id: '', label: 'All' },
+  { id: 'computing', label: 'Computing & Phones' },
+  { id: 'audio', label: 'Audio' },
+  { id: 'tvs', label: 'TVs' },
+  { id: 'home', label: 'Home' },
+  { id: 'kitchen', label: 'Kitchen' },
+  { id: 'furniture', label: 'Furniture' },
+  { id: 'diy', label: 'DIY' },
+  { id: 'sports', label: 'Sports' },
+];
+
 export default function MapPage() {
   const [mounted, setMounted] = useState(false);
-  const { lat, lng, displayName } = useLocationStore();
+  const [activeCategory, setActiveCategory] = useState('');
+  const { lat, lng, displayName, country } = useLocationStore();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -21,6 +34,7 @@ export default function MapPage() {
       const params = new URLSearchParams();
       if (lat) params.set('lat', String(lat));
       if (lng) params.set('lng', String(lng));
+      if (country) params.set('country', country.toLowerCase());
       const res = await fetch(`/api/stores?${params}`);
       const json = await res.json();
       return json.data as (Store & { distanceKm?: number })[];
@@ -30,15 +44,40 @@ export default function MapPage() {
 
   if (!mounted) return null;
 
-  const physicalStores = (stores || []).filter(s => s.type !== 'online');
+  const allStores = stores || [];
+  const physicalStores = allStores.filter(s => s.type !== 'online');
+
+  // Physical/both stores always shown; online stores filtered by their category tags
+  const visibleStores = activeCategory
+    ? allStores.filter(s =>
+        s.type !== 'online' || s.categories?.includes(activeCategory)
+      )
+    : allStores;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-6">
         <p className="section-label mb-1">Coverage</p>
-        <h1 className="text-2xl font-bold text-scout-dark">
-          {displayName ? `Stores near ${displayName}` : 'London store map'}
+        <h1 className="text-2xl font-serif text-scout-dark">
+          {displayName ? <>Stores near <em className="italic">{displayName}</em></> : 'Store map'}
         </h1>
+      </div>
+
+      {/* Category filter chips */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+        {CATEGORY_FILTERS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveCategory(id)}
+            className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+              activeCategory === id
+                ? 'bg-scout-dark text-white border-scout-dark'
+                : 'bg-white text-scout-muted border-scout-border hover:text-scout-dark hover:border-scout-dark'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -51,7 +90,7 @@ export default function MapPage() {
         <div className="space-y-3 max-h-[600px] overflow-y-auto">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)
-            : physicalStores.map(store => (
+            : visibleStores.map(store => (
               <StoreCard key={store.id} store={store} />
             ))
           }

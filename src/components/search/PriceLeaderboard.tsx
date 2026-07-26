@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useLocationStore } from '@/store/location-store';
 import { useCurrency } from '@/hooks/useCurrency';
 import { queryKeys } from '@/lib/query-keys';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 interface PriceLeaderboardProps {
   query: string;
@@ -30,10 +31,38 @@ export function PriceLeaderboard({ query }: PriceLeaderboardProps) {
     enabled: !!query,
   });
 
-  if (isLoading || !data || data.length === 0) return null;
+  if (!data && !isLoading) return null;
+  if (data && data.length === 0) return null;
+
+  if (isLoading) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="space-y-1.5">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-6 w-40" />
+          </div>
+          <Skeleton className="h-3 w-28" />
+        </div>
+        <div className="border border-scout-border rounded-2xl overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={cn('flex items-center gap-3 px-4 py-3', i !== 3 && 'border-b border-scout-border')}>
+              <Skeleton className="h-3 w-3 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+              <Skeleton className="hidden md:block h-5 w-20" />
+              <Skeleton className="h-6 w-14 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Sort by lowest price, take top 8
-  const sorted = [...data].sort((a, b) => a.lowestPricePence - b.lowestPricePence).slice(0, 8);
+  const sorted = [...(data as Product[])].sort((a, b) => a.lowestPricePence - b.lowestPricePence).slice(0, 8);
 
   return (
     <div className="mb-8">

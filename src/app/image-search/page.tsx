@@ -20,7 +20,7 @@ export default function ImageSearchPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 text-center">
       <p className="section-label mb-3">Visual Search</p>
-      <h1 className="text-3xl font-bold text-scout-dark mb-3">Search by image</h1>
+      <h1 className="text-3xl font-serif text-scout-dark mb-3"><em className="italic">Snap it.</em> Find it.</h1>
       <p className="text-scout-muted mb-10">Upload a photo of any product and Scout will find where to buy it for the best price.</p>
 
       <ImageUpload />

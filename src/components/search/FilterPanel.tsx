@@ -1,10 +1,14 @@
 'use client';
 
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Star } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchStore } from '@/store/search-store';
 import { RangeSlider } from '@/components/ui/RangeSlider';
 import { useCurrency } from '@/hooks/useCurrency';
-import type { ProductCategory } from '@/types';
+import { useLocationStore } from '@/store/location-store';
+import { queryKeys } from '@/lib/query-keys';
+import { cn } from '@/lib/utils';
+import type { Product, ProductCategory } from '@/types';
 
 const CATEGORIES: { id: ProductCategory; label: string }[] = [
   { id: 'audio', label: 'Audio' },
@@ -17,15 +21,45 @@ const CATEGORIES: { id: ProductCategory; label: string }[] = [
   { id: 'sports', label: 'Sports' },
 ];
 
-export function FilterPanel() {
+const RATING_TIERS = [4, 3, 2] as const;
+
+interface FilterPanelProps {
+  query?: string;
+}
+
+export function FilterPanel({ query = '' }: FilterPanelProps) {
   const { filters, setFilters } = useSearchStore();
   const { formatPrice } = useCurrency();
+  const { lat, lng } = useLocationStore();
+
+  // Reuses the SearchResults query cache entry — no extra network request.
+  const { data: rawData } = useQuery({
+    queryKey: queryKeys.search(query, lat, lng),
+    queryFn: async () => {
+      const params = new URLSearchParams({ q: query });
+      if (lat) params.set('lat', String(lat));
+      if (lng) params.set('lng', String(lng));
+      const res = await fetch(`/api/search?${params}`);
+      const json = await res.json();
+      return json.data as Product[];
+    },
+    enabled: !!query,
+  });
+
+  const brands = Array.from(new Set((rawData ?? []).map(p => p.brand).filter(Boolean))).sort();
 
   const toggleCategory = (cat: ProductCategory) => {
     const cats = filters.categories.includes(cat)
       ? filters.categories.filter(c => c !== cat)
       : [...filters.categories, cat];
     setFilters({ categories: cats });
+  };
+
+  const toggleBrand = (brand: string) => {
+    const list = filters.brands.includes(brand)
+      ? filters.brands.filter(b => b !== brand)
+      : [...filters.brands, brand];
+    setFilters({ brands: list });
   };
 
   const priceValue: [number, number] = [
@@ -71,6 +105,59 @@ export function FilterPanel() {
           onChange={([min, max]) => setFilters({ minPricePence: min, maxPricePence: max })}
           formatValue={formatPrice}
         />
+      </div>
+
+      {/* Brand */}
+      {brands.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-scout-muted mb-3">Brand</h3>
+          <div className="flex flex-wrap gap-2">
+            {brands.map(brand => (
+              <button
+                key={brand}
+                onClick={() => toggleBrand(brand)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                  filters.brands.includes(brand)
+                    ? 'bg-scout-dark text-white border-scout-dark'
+                    : 'bg-white text-scout-muted border-scout-border hover:border-scout-dark hover:text-scout-dark'
+                }`}
+              >
+                {brand}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Rating */}
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-scout-muted mb-3">Rating</h3>
+        <div className="space-y-1.5">
+          {RATING_TIERS.map(tier => (
+            <button
+              key={tier}
+              onClick={() => setFilters({ minRating: filters.minRating === tier ? undefined : tier })}
+              className={cn(
+                'flex items-center gap-1.5 w-full px-2 py-1 rounded-lg text-sm transition-colors',
+                filters.minRating === tier ? 'bg-scout-bg text-scout-dark font-medium' : 'text-scout-muted hover:text-scout-dark'
+              )}
+            >
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} size={13} className={i < tier ? 'fill-scout-accent text-scout-accent' : 'text-scout-border'} />
+              ))}
+              <span>&amp; up</span>
+            </button>
+          ))}
+          <button
+            onClick={() => setFilters({ minRating: undefined })}
+            className={cn(
+              'text-sm px-2 py-1 rounded-lg transition-colors',
+              filters.minRating == null ? 'text-scout-dark font-medium' : 'text-scout-muted hover:text-scout-dark'
+            )}
+          >
+            Any rating
+          </button>
+        </div>
       </div>
 
       {/* Toggles */}

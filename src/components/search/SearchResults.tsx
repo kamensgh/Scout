@@ -68,6 +68,12 @@ export function SearchResults({ query }: SearchResultsProps) {
     if (filters.categories.length > 0) {
       result = result.filter(p => filters.categories.includes(p.category));
     }
+    if (filters.brands.length > 0) {
+      result = result.filter(p => filters.brands.includes(p.brand));
+    }
+    if (filters.minRating != null) {
+      result = result.filter(p => p.rating >= filters.minRating!);
+    }
     if (filters.minPricePence != null && filters.minPricePence > 0) {
       result = result.filter(p => p.lowestPricePence >= filters.minPricePence!);
     }

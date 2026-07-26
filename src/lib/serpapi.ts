@@ -59,40 +59,37 @@ interface ImmersiveProductResponse {
 }
 
 export const STORE_DOMAIN_MAP: Record<string, { id: string; name: string; abbreviation: string; logo: string }> = {
-  'amazon': { id: 'amazon', name: 'Amazon', abbreviation: 'AMZ', logo: 'https://img.logo.dev/amazon.co.uk' },
-  'currys': { id: 'currys', name: 'Currys', abbreviation: 'CU', logo: 'https://img.logo.dev/currys.co.uk' },
-  'johnlewis': { id: 'johnlewis', name: 'John Lewis', abbreviation: 'JL', logo: 'https://img.logo.dev/johnlewis.com' },
-  'john lewis': { id: 'johnlewis', name: 'John Lewis', abbreviation: 'JL', logo: 'https://img.logo.dev/johnlewis.com' },
-  'argos': { id: 'argos', name: 'Argos', abbreviation: 'AR', logo: 'https://img.logo.dev/argos.co.uk' },
-  'ebay': { id: 'ebay', name: 'eBay', abbreviation: 'EB', logo: 'https://img.logo.dev/ebay.co.uk' },
-  'ao.com': { id: 'ao', name: 'AO', abbreviation: 'AO', logo: 'https://img.logo.dev/ao.com' },
-  'very': { id: 'very', name: 'Very', abbreviation: 'VR', logo: 'https://img.logo.dev/very.co.uk' },
-  'screwfix': { id: 'screwfix', name: 'Screwfix', abbreviation: 'SF', logo: 'https://img.logo.dev/screwfix.com' },
-  'b&q': { id: 'bq', name: "B&Q", abbreviation: 'BQ', logo: 'https://img.logo.dev/diy.com' },
-  'halfords': { id: 'halfords', name: 'Halfords', abbreviation: 'HF', logo: 'https://img.logo.dev/halfords.com' },
-  'ikea': { id: 'ikea', name: 'IKEA', abbreviation: 'IK', logo: 'https://img.logo.dev/ikea.com' },
-  'apple': { id: 'apple', name: 'Apple', abbreviation: 'AP', logo: 'https://img.logo.dev/apple.com' },
-  'samsung': { id: 'samsung', name: 'Samsung', abbreviation: 'SM', logo: 'https://img.logo.dev/samsung.com' },
-  'costco': { id: 'costco', name: 'Costco', abbreviation: 'CS', logo: 'https://img.logo.dev/costco.co.uk' },
-  'box': { id: 'box', name: 'Box', abbreviation: 'BX', logo: 'https://img.logo.dev/box.co.uk' },
-  'scan': { id: 'scan', name: 'Scan', abbreviation: 'SC', logo: 'https://img.logo.dev/scan.co.uk' },
-  'brown thomas': { id: 'brownthomas', name: 'Brown Thomas', abbreviation: 'BT', logo: 'https://img.logo.dev/brownthomas.com' },
-  'idealo': { id: 'idealo', name: 'idealo', abbreviation: 'ID', logo: 'https://img.logo.dev/idealo.co.uk' },
-  'boots': { id: 'boots', name: 'Boots', abbreviation: 'BO', logo: 'https://img.logo.dev/boots.com' },
-  'tesco': { id: 'tesco', name: 'Tesco', abbreviation: 'TE', logo: 'https://img.logo.dev/tesco.com' },
-  'next': { id: 'next', name: 'Next', abbreviation: 'NX', logo: 'https://img.logo.dev/next.co.uk' },
-  'target': { id: 'target', name: 'Target', abbreviation: 'TG', logo: 'https://img.logo.dev/target.com' },
-  'walmart': { id: 'walmart', name: 'Walmart', abbreviation: 'WM', logo: 'https://img.logo.dev/walmart.com' },
-  'best buy': { id: 'bestbuy', name: 'Best Buy', abbreviation: 'BB', logo: 'https://img.logo.dev/bestbuy.com' },
-  'jumia': { id: 'jumia', name: 'Jumia', abbreviation: 'JU', logo: 'https://img.logo.dev/jumia.com' },
-  'konga': { id: 'konga', name: 'Konga', abbreviation: 'KG', logo: 'https://img.logo.dev/konga.com' },
-  'takealot': { id: 'takealot', name: 'Takealot', abbreviation: 'TA', logo: 'https://img.logo.dev/takealot.com' },
-  'flipkart': { id: 'flipkart', name: 'Flipkart', abbreviation: 'FK', logo: 'https://img.logo.dev/flipkart.com' },
-  'noon': { id: 'noon', name: 'Noon', abbreviation: 'NN', logo: 'https://img.logo.dev/noon.com' },
-  'lazada': { id: 'lazada', name: 'Lazada', abbreviation: 'LZ', logo: 'https://img.logo.dev/lazada.com' },
-  'shopee': { id: 'shopee', name: 'Shopee', abbreviation: 'SH', logo: 'https://img.logo.dev/shopee.com' },
-  'mediamarkt': { id: 'mediamarkt', name: 'MediaMarkt', abbreviation: 'MM', logo: 'https://img.logo.dev/mediamarkt.de' },
-  'fnac': { id: 'fnac', name: 'Fnac', abbreviation: 'FN', logo: 'https://img.logo.dev/fnac.com' },
+  'amazon': { id: 'amazon-us', name: 'Amazon', abbreviation: 'AMZ', logo: '/logos/amazon-us.svg' },
+  'currys': { id: 'currys', name: 'Currys', abbreviation: 'CU', logo: '/logos/currys.svg' },
+  'johnlewis': { id: 'johnlewis', name: 'John Lewis', abbreviation: 'JL', logo: '/logos/johnlewis.svg' },
+  'john lewis': { id: 'johnlewis', name: 'John Lewis', abbreviation: 'JL', logo: '/logos/johnlewis.svg' },
+  'argos': { id: 'argos', name: 'Argos', abbreviation: 'AR', logo: '/logos/argos.svg' },
+  'ebay': { id: 'ebay', name: 'eBay', abbreviation: 'EB', logo: '/logos/ebay.svg' },
+  'ao.com': { id: 'ao', name: 'AO', abbreviation: 'AO', logo: '/logos/ao.svg' },
+  'ao': { id: 'ao', name: 'AO', abbreviation: 'AO', logo: '/logos/ao.svg' },
+  'very': { id: 'very', name: 'Very', abbreviation: 'VR', logo: '/logos/very.svg' },
+  'scan': { id: 'scan', name: 'Scan', abbreviation: 'SC', logo: '/logos/scan.svg' },
+  'ikea': { id: 'ikea', name: 'IKEA', abbreviation: 'IK', logo: '/logos/ikea.svg' },
+  'apple': { id: 'apple', name: 'Apple', abbreviation: 'AP', logo: '/logos/apple.svg' },
+  'samsung': { id: 'samsung', name: 'Samsung', abbreviation: 'SM', logo: '/logos/samsung.svg' },
+  'target': { id: 'target', name: 'Target', abbreviation: 'TG', logo: '/logos/target.svg' },
+  'walmart': { id: 'walmart', name: 'Walmart', abbreviation: 'WM', logo: '/logos/walmart.svg' },
+  'best buy': { id: 'bestbuy', name: 'Best Buy', abbreviation: 'BB', logo: '/logos/bestbuy.svg' },
+  'bestbuy': { id: 'bestbuy', name: 'Best Buy', abbreviation: 'BB', logo: '/logos/bestbuy.svg' },
+  'newegg': { id: 'newegg', name: 'Newegg', abbreviation: 'NE', logo: '/logos/newegg.svg' },
+  'jumia': { id: 'jumia-gh', name: 'Jumia', abbreviation: 'JU', logo: '/logos/jumia-gh.svg' },
+  'konga': { id: 'konga', name: 'Konga', abbreviation: 'KG', logo: '/logos/konga.svg' },
+  'melcom': { id: 'melcom', name: 'Melcom', abbreviation: 'MC', logo: '/logos/melcom.svg' },
+  'takealot': { id: 'takealot', name: 'Takealot', abbreviation: 'TA', logo: '/logos/takealot.svg' },
+  'flipkart': { id: 'flipkart', name: 'Flipkart', abbreviation: 'FK', logo: '/logos/flipkart.svg' },
+  'noon': { id: 'noon-ae', name: 'Noon', abbreviation: 'NN', logo: '/logos/noon-ae.svg' },
+  'lazada': { id: 'lazada-sg', name: 'Lazada', abbreviation: 'LZ', logo: '/logos/lazada-sg.svg' },
+  'shopee': { id: 'shopee-sg', name: 'Shopee', abbreviation: 'SH', logo: '/logos/shopee-sg.svg' },
+  'mediamarkt': { id: 'mediamarkt-de', name: 'MediaMarkt', abbreviation: 'MM', logo: '/logos/mediamarkt-de.svg' },
+  'fnac': { id: 'fnac', name: 'Fnac', abbreviation: 'FN', logo: '/logos/fnac.svg' },
+  'jb hi-fi': { id: 'jbhifi', name: 'JB Hi-Fi', abbreviation: 'JB', logo: '/logos/jbhifi.svg' },
+  'harvey norman': { id: 'harvey-norman', name: 'Harvey Norman', abbreviation: 'HN', logo: '/logos/harvey-norman.svg' },
+  'slot': { id: 'slot-ng', name: 'Slot', abbreviation: 'SL', logo: '/logos/slot-ng.svg' },
 };
 
 export function guessStoreFromSource(source: string) {
@@ -100,13 +97,15 @@ export function guessStoreFromSource(source: string) {
   for (const [key, info] of Object.entries(STORE_DOMAIN_MAP)) {
     if (lower.includes(key)) return info;
   }
+  // No logo asset available for unrecognized retailers — img.logo.dev now requires
+  // a paid API token (returns 401 unconditionally without one), so skip the guaranteed-failed
+  // request and let callers render the initials badge directly.
   const abbr = source.slice(0, 2).toUpperCase();
-  const domain = source.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
   return {
     id: source.toLowerCase().replace(/\s+/g, '-'),
     name: source,
     abbreviation: abbr,
-    logo: `https://img.logo.dev/${domain}`,
+    logo: '',
   };
 }
 
@@ -183,8 +182,11 @@ async function fetchShopping(query: string, countryCode: string): Promise<Produc
     const sorted = storePrices.sort((a, b) => a.pricePence - b.pricePence);
     const lowestPricePence = sorted[0].pricePence;
     const highestPricePence = sorted[sorted.length - 1].pricePence;
-    const rrpPence = Math.round(highestPricePence * 1.15);
+    // No genuine RRP/"was" price is available from SerpAPI Google Shopping results.
+    // Only claim a discount when we have a real second data point (a higher price
+    // actually seen at another retailer) — never fabricate a markup.
     const storeCount = sorted.length;
+    const rrpPence = storeCount > 1 ? highestPricePence : lowestPricePence;
     idx++;
 
     products.push({
@@ -219,7 +221,7 @@ async function fetchShopping(query: string, countryCode: string): Promise<Produc
 const SUPPORTED_COUNTRIES = new Set([
   'us', 'gb', 'ca', 'au', 'de', 'fr', 'it', 'es', 'nl', 'be', 'at', 'ch',
   'se', 'no', 'dk', 'fi', 'pl', 'pt', 'ie', 'nz', 'sg', 'in', 'jp', 'br',
-  'mx', 'za', 'ng', 'ke', 'eg', 'ae', 'sa',
+  'mx', 'za', 'ng', 'ke', 'gh', 'eg', 'ae', 'sa',
 ]);
 
 const FALLBACK_CHAIN = ['us', 'gb'];

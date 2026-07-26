@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { notFound } from 'next/navigation';
-import { Heart, BarChart2, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Heart, ArrowLeft, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import type { Product } from '@/types';
+import { useSession, signIn } from 'next-auth/react';
 import { useLocationStore } from '@/store/location-store';
 import { useWishlistStore } from '@/store/wishlist-store';
-import { useComparisonStore } from '@/store/comparison-store';
 import { ProductGallery } from '@/components/products/ProductGallery';
 import { PriceComparisonTable } from '@/components/products/PriceComparisonTable';
 import { ProductAISummary } from '@/components/products/ProductAISummary';
@@ -29,7 +29,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const { id } = params;
   const { lat, lng } = useLocationStore();
   const { isProductSaved, addProduct, removeProduct } = useWishlistStore();
-  const { isCompared, addProduct: addToCompare, removeProduct: removeFromCompare } = useComparisonStore();
+  const { data: session } = useSession();
   const { formatPrice } = useCurrency();
   const [specsOpen, setSpecsOpen] = useState(false);
   const [aiDetails, setAiDetails] = useState<{ description: string; specs: Record<string, string> } | null>(null);
@@ -84,8 +84,7 @@ export default function ProductPage({ params }: ProductPageProps) {
   const savings = product.rrpPence > product.lowestPricePence
     ? discountPercent(product.rrpPence, product.lowestPricePence)
     : 0;
-  const saved = isProductSaved(product.id);
-  const compared = isCompared(product.id);
+  const saved = session ? isProductSaved(product.id) : false;
 
   // Find the cheapest store that has a real external URL
   const bestBuy = product.storePrices.find(sp => sp.url && sp.url !== '#') ?? product.storePrices[0];
@@ -117,7 +116,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               <Badge variant="category">{product.category}</Badge>
               {product.trending && <Badge variant="trending">Trending</Badge>}
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-scout-dark mb-3 leading-tight">{product.name}</h1>
+            <h1 className="text-2xl lg:text-3xl font-serif text-scout-dark mb-3 leading-tight">{product.name}</h1>
             <p className="text-scout-muted text-sm leading-relaxed mb-4">{description}</p>
             <StarRating rating={product.rating} showValue reviewCount={product.reviewCount} />
           </div>
@@ -125,7 +124,7 @@ export default function ProductPage({ params }: ProductPageProps) {
           {/* Price */}
           <div className="border-t border-scout-border pt-6">
             <div className="flex items-baseline gap-3 mb-1">
-              <span className="text-3xl font-bold text-scout-dark">{formatPrice(product.lowestPricePence)}</span>
+              <span className="text-3xl font-serif text-scout-dark">{formatPrice(product.lowestPricePence)}</span>
               {savings >= 5 && (
                 <>
                   <span className="text-lg text-scout-muted line-through">{formatPrice(product.rrpPence)}</span>
@@ -151,18 +150,10 @@ export default function ProductPage({ params }: ProductPageProps) {
             <Button
               variant="secondary"
               size="icon"
-              onClick={() => saved ? removeProduct(product.id) : addProduct(product)}
+              onClick={() => { if (!session) { signIn('google'); return; } if (saved) { removeProduct(product.id); } else { addProduct(product); } }}
               className={cn(saved && 'border-scout-red text-scout-red')}
             >
               <Heart size={18} fill={saved ? 'currentColor' : 'none'} />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => compared ? removeFromCompare(product.id) : addToCompare(product.id)}
-              className={cn(compared && 'border-scout-blue text-scout-blue')}
-            >
-              <BarChart2 size={18} />
             </Button>
           </div>
 

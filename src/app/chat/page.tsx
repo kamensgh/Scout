@@ -14,7 +14,7 @@ export default function ChatPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="mb-6">
         <p className="section-label mb-1">AI Assistant</p>
-        <h1 className="text-2xl font-bold text-scout-dark">Ask Scout anything</h1>
+        <h1 className="text-2xl font-serif italic text-scout-dark">Ask Scout anything</h1>
       </div>
       <div className="bg-white border border-scout-border rounded-2xl overflow-hidden">
         <AIAssistant />

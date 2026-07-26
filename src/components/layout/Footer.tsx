@@ -4,13 +4,13 @@ import { Search } from 'lucide-react';
 const LINKS = {
   Product: [
     { label: 'Discover', href: '/' },
-    { label: 'Browse', href: '/trending' },
+    { label: 'Trending', href: '/trending' },
     { label: 'Assistant', href: '/chat' },
     { label: 'Visual search', href: '/image-search' },
     { label: 'Saved', href: '/saved' },
   ],
   Stores: [
-    { label: 'London map', href: '/map' },
+    { label: 'Store map', href: '/map' },
     { label: 'All retailers', href: '/trending' },
     { label: 'For sellers', href: '/merchant' },
   ],
@@ -42,7 +42,7 @@ export function Footer() {
               <span className="font-bold text-scout-dark">Scout</span>
             </div>
             <p className="text-sm text-scout-muted max-w-48 mb-4">
-              Search once, pay less. Scout watches live prices across the UK&apos;s biggest retailers.
+              Search once, pay less. Scout watches live prices across local retailers worldwide.
             </p>
           </div>
 

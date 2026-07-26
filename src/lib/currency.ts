@@ -28,7 +28,7 @@ const COUNTRY_CURRENCY: Record<string, string> = {
 const SHOPPING_SUPPORTED = new Set([
   'us', 'gb', 'ca', 'au', 'nz', 'de', 'fr', 'it', 'es', 'nl', 'be',
   'at', 'ch', 'se', 'no', 'dk', 'fi', 'pl', 'pt', 'ie', 'sg', 'in',
-  'jp', 'br', 'mx', 'za', 'ng', 'ke', 'eg', 'ae', 'sa',
+  'jp', 'br', 'mx', 'za', 'ng', 'ke', 'gh', 'eg', 'ae', 'sa',
 ]);
 
 export function getCurrencyForCountry(countryCode: string | null): string {

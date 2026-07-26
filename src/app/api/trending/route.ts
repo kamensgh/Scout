@@ -17,7 +17,7 @@ const CATEGORY_QUERIES: Record<string, string> = {
 
 export async function GET(req: NextRequest) {
   const category = req.nextUrl.searchParams.get('category') as ProductCategory | null;
-  const countryCode = req.nextUrl.searchParams.get('country') || 'gb';
+  const countryCode = (req.nextUrl.searchParams.get('country') || 'gb').toLowerCase();
   const limit = parseInt(req.nextUrl.searchParams.get('limit') || '8');
   const queryOverride = req.nextUrl.searchParams.get('q');
 

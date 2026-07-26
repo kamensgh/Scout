@@ -15,6 +15,7 @@ export interface Store {
   verified: boolean;
   rating: number;
   openNow?: boolean;
+  categories?: string[];
 }
 
 export interface StorePrice {
